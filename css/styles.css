@@ -541,3 +541,8 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 
 /* Sin líneas dobles junto a las flechas */
 .catbar__arrow--prev + .catbar__chips .chip.is-first::before { display: none; }
+
+/* Páginas informativas: sin barra de categorías, con botón "Volver al catálogo" */
+body.no-catbar .catbar { display: none; }
+.back-btn { margin-bottom: 18px; gap: 6px; }
+.back-btn--bottom { margin: 26px 0 0; }

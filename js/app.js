@@ -223,7 +223,7 @@
   function onScrollHeader() {
     const y = window.scrollY;
     const was = header.classList.contains("is-scrolled");
-    const now = was ? y > SHOW_AT : y > HIDE_AT;
+    const now = document.body.classList.contains("no-catbar") ? false : (was ? y > SHOW_AT : y > HIDE_AT);
     if (now === was) return;
     header.classList.toggle("is-scrolled", now);
     // Si estabas escribiendo en un buscador, el foco pasa al que queda visible.
@@ -802,7 +802,14 @@
     renderCatbar(null);
     const fn = INFO[page];
     if (!fn) return viewNotFound();
-    app.innerHTML = `<div class="container"><div class="page"><div class="info">${fn()}</div></div></div>`;
+    app.innerHTML = `<div class="container"><div class="page">
+      <a class="btn btn--ghost btn--sm back-btn" href="#/productos">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg>
+        Volver al catálogo
+      </a>
+      <div class="info">${fn()}</div>
+      <a class="btn btn--sm back-btn back-btn--bottom" href="#/productos">Volver al catálogo</a>
+    </div></div>`;
   }
 
   function viewNotFound() {
@@ -825,6 +832,8 @@
     $$(".search__suggest").forEach((box) => { box.hidden = true; });
 
     stopCarousel();
+    // Contacto, preguntas frecuentes, envíos, cómo comprar y nosotros: sin barra de categorías.
+    document.body.classList.toggle("no-catbar", a === "info");
     if (!a) viewHome();
     else if (a === "productos") viewCatalog({ title: "Todos los productos", crumb: "Productos", list: PRODUCTS, active: "productos", query });
     else if (a === "novedades") viewCatalog({ title: "Novedades y nuevos ingresos", crumb: "Novedades", list: novedades(), active: "novedades", query });
