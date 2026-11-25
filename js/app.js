@@ -287,6 +287,10 @@
     }));
     track.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
+    // Cuando aparece el buscador en la barra, el espacio de las categorías se achica:
+    // recalculamos las flechas para que la de "más" siempre esté si hay categorías ocultas.
+    if ("ResizeObserver" in window) new ResizeObserver(update).observe(track);
+    $("#barSearchForm").addEventListener("transitionend", update);
     requestAnimationFrame(() => { centerChip(track, $(".chip.active", track), false); update(); });
   }
 

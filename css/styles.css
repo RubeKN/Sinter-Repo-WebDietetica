@@ -512,3 +512,11 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
   .orderbar:not([hidden]) ~ .wa-float { bottom: 88px; }   /* no tapar la barra "Ver pedido" */
   .header__contact { display: none; }
 }
+
+/* El buscador de la barra es un bloque aparte: separado de las categorías, nunca encima */
+@media (min-width: 641px) {
+  .header.is-scrolled .search--bar { position: relative; margin-left: 16px; }
+  .header.is-scrolled .search--bar::before {
+    content: ""; position: absolute; left: -17px; top: 0; bottom: 0; width: 1px; background: rgba(44,58,26,.2);
+  }
+}
