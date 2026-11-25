@@ -216,7 +216,14 @@
   // Al bajar se oculta la fila superior del header; al volver arriba reaparece.
   const HIDE_AT = 90, SHOW_AT = 30; // histéresis para que no "tiemble"
   const headerRow = $(".header__row", header);
-  const setRowHeight = () => header.style.setProperty("--row-h", headerRow.offsetHeight + "px");
+  // En celular el buscador queda arriba al bajar: solo se oculta la línea del logo/carrito/menú.
+  const isMobile = window.matchMedia("(max-width: 640px)");
+  const setRowHeight = () => {
+    const shift = isMobile.matches
+      ? $("#searchForm").offsetTop - 8          // hasta justo arriba del buscador
+      : headerRow.offsetHeight;                  // toda la fila
+    header.style.setProperty("--row-h", shift + "px");
+  };
   function onScrollHeader() {
     const y = window.scrollY;
     const was = header.classList.contains("is-scrolled");
@@ -228,7 +235,7 @@
     const to = now ? $("#barSearchForm input") : $("#searchInput");
     $("#barSearchForm").setAttribute("aria-hidden", String(!now));
     $("#barSearchForm input").tabIndex = now ? 0 : -1;
-    if (document.activeElement === from) { to.value = from.value; to.focus({ preventScroll: true }); }
+    if (!isMobile.matches && document.activeElement === from) { to.value = from.value; to.focus({ preventScroll: true }); }
     $$(".search__suggest").forEach((box) => { box.hidden = true; });
   }
   window.addEventListener("scroll", onScrollHeader, { passive: true });
@@ -238,7 +245,9 @@
   // Lleva la vista al inicio del contenido (título de la categoría), justo debajo del header fijo.
   function scrollToContent() {
     // Al llegar, el header ya está oculto: solo queda visible la barra de categorías.
-    const y = app.getBoundingClientRect().top + window.scrollY - $(".catbar").offsetHeight + 8;
+    const shift = parseFloat(getComputedStyle(header).getPropertyValue("--row-h")) || 0;
+    const visible = header.offsetHeight - shift;   // lo que queda a la vista del header al bajar
+    const y = app.getBoundingClientRect().top + window.scrollY - visible + 8;
     smoothScrollTo(Math.max(y, HIDE_AT + 2));
   }
 

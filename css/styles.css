@@ -481,3 +481,10 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
   .cart-btn { margin-left: auto; }
 }
 .menu-list .menu-offer { color: var(--red); }
+
+/* Celular: al bajar el buscador queda arriba (no se mueve a la barra de categorías) */
+@media (max-width: 640px) {
+  .header.is-scrolled .header__row { visibility: visible; }
+  .header.is-scrolled .header__row > :not(.search) { visibility: hidden; transition: visibility 0s .4s; }
+  .search--bar, .header.is-scrolled .search--bar { display: none !important; }
+}
