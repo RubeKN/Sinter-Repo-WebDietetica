@@ -766,3 +766,7 @@ body.no-catbar .info.info-layout { max-width: none; }
   .info-cards { margin-top: 28px; }
   .info__body > p:first-child { margin-top: 0; }
 }
+
+/* Botones "Ver y pedir" en el mismo verde del pie de página */
+.card .btn { background: var(--forest); color: #fff; }
+.card .btn:hover { background: #2d5440; }
