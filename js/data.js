@@ -10,6 +10,8 @@ window.STORE = {
   transferDiscount: 0.05, // 5% off pagando por transferencia
   // Fin de la promo "Ofertas de la semana" (hora Argentina)
   promoEndsAt: "2026-11-28T23:59:59-03:00",
+  // Imagen opcional para el hero (ej: "img/hero.jpg"). Si está vacío se muestra un mosaico de ofertas.
+  heroImage: "",
   shippingZones: [
     { name: "CABA", from: 1000, to: 1499, price: 4500, days: "24 a 48 hs" },
     { name: "GBA", from: 1600, to: 1999, price: 6200, days: "2 a 3 días hábiles" },
@@ -51,7 +53,7 @@ window.PRODUCTS = [
     desc: "Mariposas de nuez de color claro, seleccionadas. Fuente de omega 3." },
   { id: 3, name: "Mix Energético", cat: "mixes", price: 5300, oldPrice: 5900, emoji: "🥨", tags: ["vegano"], variants: W, stock: 60,
     desc: "Maní, almendras, pasas de uva, nueces y banana chips. El clásico para llevar a todos lados." },
-  { id: 4, name: "Castañas de Cajú", cat: "frutos-secos", price: 8100, emoji: "🌰", tags: ["sin-tacc", "vegano", "keto"], variants: W, stock: 18,
+  { id: 4, featured: true, name: "Castañas de Cajú", cat: "frutos-secos", price: 8100, emoji: "🌰", tags: ["sin-tacc", "vegano", "keto"], variants: W, stock: 18,
     desc: "Cajú W320 enteras, sin sal. Perfectas para quesos veganos o salteados." },
   { id: 5, name: "Pasas de Uva Morochas", cat: "frutas-deshidratadas", price: 2900, emoji: "🍇", tags: ["vegano", "sin-tacc"], variants: W, stock: 80,
     desc: "Pasas de uva sin semilla, dulces y tiernas." },
@@ -68,18 +70,18 @@ window.PRODUCTS = [
     desc: "Chía negra seleccionada. Rica en fibra y omega 3. Ideal para puddings y panificados." },
   { id: 7, name: "Semillas de Lino Dorado", cat: "semillas", price: 1900, emoji: "🟤", tags: ["sin-tacc", "vegano"], variants: W, stock: 70,
     desc: "Lino dorado limpio. Molelo antes de consumir para aprovechar sus nutrientes." },
-  { id: 8, name: "Mix de Semillas", cat: "semillas", price: 2800, emoji: "🌻", tags: ["sin-tacc", "vegano"], variants: W, stock: 55,
+  { id: 8, featured: true, name: "Mix de Semillas", cat: "semillas", price: 2800, emoji: "🌻", tags: ["sin-tacc", "vegano"], variants: W, stock: 55,
     desc: "Girasol, zapallo, sésamo, lino y chía. Para ensaladas, yogures y panes." },
   { id: 9, name: "Semillas de Zapallo Peladas", cat: "semillas", price: 4900, emoji: "🎃", tags: ["sin-tacc", "vegano", "keto"], variants: W, stock: 30,
     desc: "Pepitas verdes peladas, crocantes y nutritivas." },
 
-  { id: 10, name: "Granola Crocante de Miel", cat: "mixes", price: 3900, emoji: "🥣", tags: [], variants: W, featured: true, stock: 45,
+  { id: 10, name: "Granola Crocante de Miel", cat: "mixes", price: 3900, oldPrice: 4400, emoji: "🥣", tags: [], variants: W, featured: true, stock: 45,
     desc: "Avena, miel, coco, almendras y pasas horneadas. Receta de la casa." },
   { id: 11, name: "Granola Sin Azúcar", cat: "mixes", price: 4500, oldPrice: 5000, emoji: "🥣", tags: ["sin-azucar", "vegano"], variants: W, stock: 35,
     desc: "Endulzada con dátiles. Sin azúcar agregada." },
   { id: 12, name: "Avena Arrollada Instantánea", cat: "mixes", price: 1500, emoji: "🌾", tags: ["vegano"], variants: W, stock: 120,
     desc: "Copos finos de rápida cocción. Para porridge, licuados y galletas." },
-  { id: 13, name: "Quinoa Blanca Lavada", cat: "mixes", price: 3200, emoji: "🍚", tags: ["sin-tacc", "vegano", "organico"], variants: W, stock: 40,
+  { id: 13, featured: true, name: "Quinoa Blanca Lavada", cat: "mixes", price: 3200, emoji: "🍚", tags: ["sin-tacc", "vegano", "organico"], variants: W, stock: 40,
     desc: "Quinoa lista para cocinar, sin saponinas." },
 
   { id: 14, name: "Harina de Almendras", cat: "harinas", price: 7900, emoji: "🥄", tags: ["sin-tacc", "keto", "vegano"], variants: W, featured: true, stock: 22,
@@ -93,7 +95,7 @@ window.PRODUCTS = [
 
   { id: 18, name: "Lentejas Turcas", cat: "legumbres", price: 2400, emoji: "🫘", tags: ["sin-tacc", "vegano"], variants: W, stock: 70,
     desc: "Lentejas rojas peladas, cocción rápida. Ideales para dhal y hamburguesas." },
-  { id: 19, name: "Garbanzos", cat: "legumbres", price: 1700, emoji: "🫘", tags: ["sin-tacc", "vegano"], variants: W, stock: 90,
+  { id: 19, featured: true, name: "Garbanzos", cat: "legumbres", price: 1700, emoji: "🫘", tags: ["sin-tacc", "vegano"], variants: W, stock: 90,
     desc: "Garbanzos calibre 9. Para hummus, guisos y ensaladas." },
   { id: 20, name: "Porotos Aduki", cat: "legumbres", price: 2600, emoji: "🫘", tags: ["sin-tacc", "vegano", "organico"], variants: W, stock: 28,
     desc: "Porotos japoneses de cocción rápida y sabor suave." },
@@ -114,7 +116,7 @@ window.PRODUCTS = [
   { id: 27, name: "Cúrcuma con Jengibre (blend)", cat: "infusiones", price: 3100, oldPrice: 3500, emoji: "🫚", tags: ["vegano", "sin-tacc"], variants: [{ label: "100 g", mult: 1 }], stock: 25,
     desc: "Blend para golden milk: cúrcuma, jengibre, canela y pimienta." },
 
-  { id: 28, name: "Miel Pura de Monte", cat: "almacen", price: 5200, emoji: "🍯", tags: ["sin-tacc"], variants: [{ label: "500 g", mult: 1 }, { label: "1 kg", mult: 1.85 }], stock: 30,
+  { id: 28, featured: true, name: "Miel Pura de Monte", cat: "almacen", price: 5200, emoji: "🍯", tags: ["sin-tacc"], variants: [{ label: "500 g", mult: 1 }, { label: "1 kg", mult: 1.85 }], stock: 30,
     desc: "Miel cruda de productores de Entre Ríos." },
   { id: 29, name: "Mantequilla de Maní", cat: "almacen", price: 3800, emoji: "🥜", tags: ["sin-tacc", "vegano", "sin-azucar"], variants: [{ label: "380 g", mult: 1 }], featured: true, stock: 45,
     desc: "100% maní tostado. Sin azúcar, sin sal, sin aceites agregados." },
@@ -125,7 +127,7 @@ window.PRODUCTS = [
 
   { id: 32, name: "Galletitas de Arroz Sin TACC", cat: "sin-tacc", price: 1600, emoji: "🍘", tags: ["sin-tacc", "vegano"], variants: [{ label: "Paquete 150 g", mult: 1 }], stock: 80,
     desc: "Galletas de arroz integral infladas, con sal marina." },
-  { id: 33, name: "Fideos de Arroz Sin TACC", cat: "sin-tacc", price: 2100, emoji: "🍜", tags: ["sin-tacc", "vegano"], variants: [{ label: "500 g", mult: 1 }], stock: 40,
+  { id: 33, featured: true, name: "Fideos de Arroz Sin TACC", cat: "sin-tacc", price: 2100, emoji: "🍜", tags: ["sin-tacc", "vegano"], variants: [{ label: "500 g", mult: 1 }], stock: 40,
     desc: "Fideos tipo tallarín de arroz, aptos celíacos." },
   { id: 34, name: "Budín de Limón Sin TACC", cat: "sin-tacc", price: 3400, oldPrice: 3900, emoji: "🍋", tags: ["sin-tacc"], variants: [{ label: "Unidad 300 g", mult: 1 }], stock: 15,
     desc: "Budín húmedo de limón con glaseado, elaborado en planta libre de gluten." }

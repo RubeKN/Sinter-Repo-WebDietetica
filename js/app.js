@@ -104,7 +104,7 @@
     const foot = $("#cartFoot");
     const lines = cart.lines();
     if (!lines.length) {
-      body.innerHTML = `<div class="empty"><div>🧺</div><p>Tu pedido está vacío.</p><a class="btn btn--gold" href="#/productos" data-close>Ver productos</a></div>`;
+      body.innerHTML = `<div class="empty"><div>🧺</div><p>Tu pedido está vacío.</p><a class="btn btn--primary" href="#/productos" data-close>Ver productos</a></div>`;
       foot.innerHTML = "";
       return;
     }
@@ -128,7 +128,7 @@
     foot.innerHTML = `
       <div class="row row--total"><span>Subtotal</span><span>${money(sub)}</span></div>
       <div class="row row--green"><span>Pagando con transferencia</span><span>${money(sub * (1 - STORE.transferDiscount))}</span></div>
-      <a class="btn btn--gold btn--block" href="#/checkout" data-close>Finalizar pedido</a>
+      <a class="btn btn--primary btn--block" href="#/checkout" data-close>Finalizar pedido</a>
       <button class="btn btn--ghost btn--block" data-close>Seguir comprando</button>`;
   }
 
@@ -173,7 +173,7 @@
     const chips = [`<a class="chip ${active === "productos" ? "active" : ""}" href="#/productos">Todo</a>`]
       .concat(CATEGORIES.map((c) => `<a class="chip ${active === c.id ? "active" : ""}" href="#/categoria/${c.id}">${c.emoji} ${esc(c.name)}</a>`))
       .concat(`<a class="chip ${active === "ofertas" ? "active" : ""}" href="#/ofertas">🔥 Ofertas</a>`);
-    $("#catbar").innerHTML = `<span class="catbar__label">▦ Explorá por categoría</span><div class="catbar__chips">${chips.join("")}</div>`;
+    $("#catbar").innerHTML = `<span class="catbar__label">Categorías</span><div class="catbar__chips">${chips.join("")}</div>`;
     const act = $(".chip.active", $("#catbar"));
     if (act) act.scrollIntoView({ block: "nearest", inline: "center" });
   }
@@ -204,48 +204,63 @@
     const off = offers();
     const endDate = new Date(STORE.promoEndsAt);
     const featured = PRODUCTS.filter((p) => p.featured && !isOffer(p));
+    const tiles = off.slice(0, 4);
+    const visual = STORE.heroImage
+      ? `<div class="hero__photo" style="background-image:url('${esc(STORE.heroImage)}')"></div>`
+      : `<div class="hero__mosaic">${tiles.map((p) => `
+          <a class="mosaic" href="#/producto/${p.id}" style="${tint(p)}">
+            <span class="off">−${offPct(p)}%</span>
+            <span class="mosaic__emoji">${p.emoji}</span>
+            <span class="mosaic__info"><b>${esc(p.name)}</b><span>${money(p.price)}</span></span>
+          </a>`).join("")}</div>`;
     app.innerHTML = `
-    <div class="container">
-      <div class="hero-card">
-        <section class="hero">
-          <span class="hero__art">🥜</span>
-          <div class="hero__text">
-            <span class="pill">Selección especial · ${off.length} productos</span>
-            <h1>Ofertas <em>de la semana</em></h1>
-            <p>Precios especiales en frutos secos, mixes y más. Aprovechalos antes de que termine la promo.</p>
-            <a class="btn btn--gold" href="#/ofertas">Ver ofertas →</a>
+    <section class="hero">
+      <div class="container hero__inner">
+        <div class="hero__text">
+          <span class="pill">Selección especial · ${off.length} productos</span>
+          <h1>Ofertas<br><em>de la semana</em></h1>
+          <p>Precios especiales en frutos secos, mixes, semillas y almacén natural. Fraccionados en el día, listos para tu casa.</p>
+          <div class="hero__ctas">
+            <a class="btn btn--offer btn--lg" href="#/ofertas">Ver ofertas →</a>
+            <a class="btn btn--ghost-light btn--lg" href="#/productos">Ver catálogo</a>
           </div>
           <div class="countdown">
-            <div class="countdown__title">⏱ La promoción termina en</div>
+            <div class="countdown__title">La promoción termina en</div>
             <div class="countdown__nums" id="countdown"></div>
-            <div class="countdown__foot">Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a las 23:59 (hora argentina)</div>
+            <div class="countdown__foot">Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} · 23:59 hs</div>
           </div>
-        </section>
-        <div class="benefits">
-          <div class="benefit"><span>🌿</span>Productos naturales</div>
-          <div class="benefit"><span>📦</span>Fraccionado en el día</div>
-          <div class="benefit"><span>🏷️</span>Precios justos</div>
-          <div class="benefit"><span>🚚</span>Envíos a domicilio</div>
         </div>
-
-        <section class="section">
-          <div class="section__head"><h2>Ofertas destacadas</h2><a href="#/ofertas">Ver todas las ofertas →</a></div>
-          <div class="grid">${off.slice(0, 8).map((p, i) => productCard(p, `Oferta ${i + 1} de ${off.length}`)).join("")}</div>
-        </section>
-
-        <section class="section">
-          <div class="section__head"><h2>Comprá por categoría</h2><a href="#/productos">Ver todo →</a></div>
-          <div class="cat-grid">${CATEGORIES.map((c) => `
-            <a class="cat-tile" href="#/categoria/${c.id}">
-              <div class="ph" style="background:${c.color}22">${c.emoji}</div>${esc(c.name)}
-            </a>`).join("")}</div>
-        </section>
-
-        <section class="section" style="padding-bottom:28px">
-          <div class="section__head"><h2>Los más pedidos</h2><a href="#/productos">Ver catálogo →</a></div>
-          <div class="grid">${featured.slice(0, 8).map((p) => productCard(p)).join("")}</div>
-        </section>
+        ${visual}
       </div>
+    </section>
+    <div class="benefits">
+      <div class="container benefits__inner">
+        <div class="benefit"><span>🌿</span><div><b>Productos naturales</b><small>Seleccionados de productores</small></div></div>
+        <div class="benefit"><span>📦</span><div><b>Fraccionado en el día</b><small>Siempre fresco</small></div></div>
+        <div class="benefit"><span>🏷️</span><div><b>Precios justos</b><small>${STORE.transferDiscount * 100}% OFF con transferencia</small></div></div>
+        <div class="benefit"><span>🚚</span><div><b>Envío gratis</b><small>Desde ${money(STORE.freeShippingFrom)}</small></div></div>
+      </div>
+    </div>
+
+    <div class="container">
+      <section class="section">
+        <div class="section__head"><div><span class="eyebrow">Hasta agotar stock</span><h2>Ofertas destacadas</h2></div><a href="#/ofertas">Ver todas las ofertas →</a></div>
+        <div class="grid">${off.slice(0, 10).map((p, i) => productCard(p, `Oferta ${i + 1} de ${off.length}`)).join("")}</div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div><span class="eyebrow">Explorá</span><h2>Comprá por categoría</h2></div><a href="#/productos">Ver todo →</a></div>
+        <div class="cat-grid">${CATEGORIES.map((c) => `
+          <a class="cat-tile" href="#/categoria/${c.id}">
+            <span class="cat-tile__icon" style="background:${c.color}26">${c.emoji}</span>
+            <span>${esc(c.name)}</span><span class="cat-tile__arrow">→</span>
+          </a>`).join("")}</div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div><span class="eyebrow">Favoritos</span><h2>Los más pedidos</h2></div><a href="#/productos">Ver catálogo →</a></div>
+        <div class="grid">${featured.slice(0, 10).map((p) => productCard(p)).join("")}</div>
+      </section>
     </div>`;
     startCountdown();
   }
@@ -340,7 +355,7 @@
               <input id="qInput" value="1" inputmode="numeric" aria-label="Cantidad">
               <button id="qPlus" aria-label="Sumar">+</button>
             </div>
-            <button class="btn btn--gold" id="addBtn" ${out ? "disabled" : ""}>Agregar al pedido</button>
+            <button class="btn btn--primary" id="addBtn" ${out ? "disabled" : ""}>Agregar al pedido</button>
           </div>
           <div class="pdp__info">
             <div>🚚 <b>Envío gratis</b> en compras desde ${money(STORE.freeShippingFrom)}. Si no, ${money(STORE.shippingCost)}.</div>
@@ -384,7 +399,7 @@
     renderCatbar(null);
     const lines = cart.lines();
     if (!lines.length) {
-      app.innerHTML = `<div class="container"><div class="page"><div class="empty"><div>🧺</div><p>No tenés productos en tu pedido.</p><a class="btn btn--gold" href="#/productos">Ver productos</a></div></div></div>`;
+      app.innerHTML = `<div class="container"><div class="page"><div class="empty"><div>🧺</div><p>No tenés productos en tu pedido.</p><a class="btn btn--primary" href="#/productos">Ver productos</a></div></div></div>`;
       return;
     }
     const saved = store.get("sinter_customer", {});
@@ -534,7 +549,7 @@
 
   function viewNotFound() {
     renderCatbar(null);
-    app.innerHTML = `<div class="container"><div class="page"><div class="empty"><div>🌱</div><p>No encontramos esta página.</p><a class="btn btn--gold" href="#/">Ir al inicio</a></div></div></div>`;
+    app.innerHTML = `<div class="container"><div class="page"><div class="empty"><div>🌱</div><p>No encontramos esta página.</p><a class="btn btn--primary" href="#/">Ir al inicio</a></div></div></div>`;
   }
 
   /* ---------------- Router ---------------- */
