@@ -748,3 +748,21 @@ body.no-catbar .footer__copy { color: #aebcaa; opacity: 1; }
   .info-cards { grid-template-columns: 1fr; }
   body.no-catbar .info details p { padding-right: 0; }
 }
+
+/* Páginas informativas en dos columnas (computadora): todo entra en pantalla junto al pie */
+body.no-catbar .info.info-layout { max-width: none; }
+@media (min-width: 981px) {
+  body.no-catbar .page { padding: 44px 0 36px; }
+  .info-layout { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; column-gap: 72px; align-items: start; }
+  .info__aside { position: sticky; top: 140px; }
+  body.no-catbar .back-btn { margin-bottom: 36px; }
+  body.no-catbar .info h1 { font-size: clamp(2.4rem, 3.6vw, 3.2rem); }
+  .info__lead { margin-bottom: 0 !important; }
+  .info__body { padding-top: 4px; }
+  body.no-catbar .info-list { margin: 0 0 32px; }
+  body.no-catbar .steps, body.no-catbar .faq { margin-top: 0; }
+  body.no-catbar .steps li { padding-block: 18px; }
+  body.no-catbar .steps li::before { top: 18px; }
+  .info-cards { margin-top: 28px; }
+  .info__body > p:first-child { margin-top: 0; }
+}

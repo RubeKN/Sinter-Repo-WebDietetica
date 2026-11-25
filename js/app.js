@@ -116,7 +116,8 @@
     // Barra flotante
     const bar = $("#orderbar");
     const onCheckout = location.hash.startsWith("#/checkout");
-    bar.hidden = count === 0 || onCheckout;
+    const onInfo = location.hash.startsWith("#/info/");   // cómo comprar, envíos, preguntas, nosotros, contacto
+    bar.hidden = count === 0 || onCheckout || onInfo;
     document.body.classList.toggle("has-orderbar", !bar.hidden);
     $("#orderbarCount").textContent = `${count} ${count === 1 ? "ARTÍCULO" : "ARTÍCULOS"}`;
     $("#orderbarTotal").textContent = money(sub);
@@ -790,7 +791,7 @@
   const INFO = {
     nosotros: () => `<span class="info__eyebrow">Quiénes somos</span>
       <h1>Nosotros</h1>
-      <p class="info__lead">Somos una dietética de barrio que se volvió online.</p>
+      <p class="info__lead">Somos una dietética de barrio que se volvió online.</p><!--body-->
       <p>Seleccionamos frutos secos, semillas, legumbres y productos de almacén natural de productores que conocemos, y los fraccionamos en el día para que lleguen frescos a tu casa.</p>
       <ul class="info-cards">
         <li><b>Naturales</b><span>Productos simples, sin vueltas.</span></li>
@@ -799,7 +800,7 @@
       </ul>`,
     "como-comprar": () => `<span class="info__eyebrow">Paso a paso</span>
       <h1>Cómo comprar</h1>
-      <p class="info__lead">Hacer tu pedido lleva un par de minutos.</p>
+      <p class="info__lead">Hacer tu pedido lleva un par de minutos.</p><!--body-->
       <ol class="steps">
         <li><b>Elegí tus productos</b><span>Navegá por categorías o usá el buscador. Elegí la presentación y la cantidad.</span></li>
         <li><b>Revisá tu pedido</b><span>Desde la barra inferior “Ver pedido” podés ajustar cantidades.</span></li>
@@ -808,7 +809,7 @@
       </ol>`,
     envios: () => `<span class="info__eyebrow">Entregas</span>
       <h1>Envíos y retiro</h1>
-      <p class="info__lead">Elegí la opción que te quede más cómoda.</p>
+      <p class="info__lead">Elegí la opción que te quede más cómoda.</p><!--body-->
       <ul class="info-list">
         <li><span>Envío a domicilio</span><div>En ${esc(STORE.city)}: ${money(STORE.shippingCost)}.<br><b>Gratis</b> en compras desde ${money(STORE.freeShippingFrom)}.</div></li>
         <li><span>Retiro en el local</span><div>Sin cargo, de lunes a sábado.</div></li>
@@ -816,7 +817,7 @@
       </ul>`,
     faq: () => `<span class="info__eyebrow">Ayuda</span>
       <h1>Preguntas frecuentes</h1>
-      <p class="info__lead">Lo que más nos consultan.</p>
+      <p class="info__lead">Lo que más nos consultan.</p><!--body-->
       <div class="faq">
         <details open><summary>¿Los productos son sueltos o envasados?</summary><p>Fraccionamos a granel y envasamos al vacío o en bolsas con cierre en el momento.</p></details>
         <details><summary>¿Tienen productos aptos celíacos?</summary><p>Sí, los marcados como “Sin TACC” son de origen certificado. Consultá por contaminación cruzada en productos fraccionados.</p></details>
@@ -825,7 +826,7 @@
       </div>`,
     contacto: () => `<span class="info__eyebrow">Estamos para ayudarte</span>
       <h1>Contacto</h1>
-      <p class="info__lead">Escribinos o pasá por el local.</p>
+      <p class="info__lead">Escribinos o pasá por el local.</p><!--body-->
       <ul class="info-list">
         <li><span>Dirección</span><div>Av. Ejemplo 1234</div></li>
         <li><span>Horarios</span><div>Lunes a sábado de 9 a 13 y de 16 a 20 hs</div></li>
@@ -838,12 +839,18 @@
     renderCatbar(null);
     const fn = INFO[page];
     if (!fn) return viewNotFound();
+    const [head, body] = fn().split("<!--body-->");
     app.innerHTML = `<div class="container"><div class="page">
-      <a class="btn btn--ghost btn--sm back-btn" href="#/productos">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg>
-        Seguir comprando
-      </a>
-      <div class="info">${fn()}</div>
+      <div class="info info-layout">
+        <div class="info__aside">
+          <a class="btn btn--ghost btn--sm back-btn" href="#/productos">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg>
+            Seguir comprando
+          </a>
+          ${head}
+        </div>
+        <div class="info__body">${body}</div>
+      </div>
     </div></div>`;
   }
 
