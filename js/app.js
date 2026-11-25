@@ -833,7 +833,6 @@
       <a href="#/">🏠 Inicio</a>
       <a href="#/info/nosotros">🌿 Nosotros</a><a href="#/info/como-comprar">🛒 Cómo comprar</a><a href="#/info/contacto">💬 Contacto</a>
       <h5>Tienda</h5><a href="#/ofertas" class="menu-offer">🔥 Ofertas de la semana</a><a href="#/novedades">✨ Novedades</a><a href="#/productos">🛍️ Todos los productos</a>
-      <h5>Categorías</h5>${CATEGORIES.map((c) => `<a href="#/categoria/${c.id}">${c.emoji} ${esc(c.name)}</a>`).join("")}
       <h5>Ayuda</h5><a href="#/info/envios">Envíos y retiro</a><a href="#/info/faq">Preguntas frecuentes</a>`;
     $("#footerWa").href = waLink("Hola! Quería hacer una consulta");
     $("#waFloat").href = waLink("Hola! Quería hacer una consulta");
