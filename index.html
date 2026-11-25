@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sinter Natural · Dietética online</title>
   <meta name="description" content="Dietética online: frutos secos, semillas, mixes, harinas y productos sin TACC. Pedí online y recibí en tu casa.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2710%27 fill=%27%239cc46b%27/%3E%3Ctext x=%2750%27 y=%2774%27 font-size=%2770%27 text-anchor=%27middle%27 font-family=%27Georgia%27 fill=%27%231c2a1e%27%3ES%3C/text%3E%3C/svg%3E">
-  <meta name="theme-color" content="#1c2a1e">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%23f2c766%27/%3E%3Ctext x=%2750%27 y=%2772%27 font-size=%2768%27 text-anchor=%27middle%27 font-family=%27Georgia%27 fill=%27%230f2e1c%27%3ES%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#143d25">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -17,30 +17,36 @@
   <header class="header">
     <div class="container header__row">
       <a href="#/" class="logo" aria-label="Inicio">
-        <span class="logo__mark">S</span>
-        <span class="logo__text"><span class="logo__name">SINTER</span><span class="logo__tag">Dietética natural</span></span>
+        <span class="logo__mark">S</span><span class="logo__name">SINTER</span>
+        <span class="logo__tag">Dietética natural</span>
       </a>
-      <form class="search" id="searchForm" role="search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input type="search" id="searchInput" placeholder="Buscar almendras, chía, granola..." autocomplete="off" aria-label="Buscar productos">
-        <ul class="search__suggest" id="searchSuggest" hidden></ul>
-      </form>
       <nav class="header__links">
         <a href="#/info/nosotros">Nosotros</a>
         <a href="#/info/como-comprar">Cómo comprar</a>
         <a href="#/info/contacto">Contacto</a>
       </nav>
-      <a href="#/ofertas" class="btn btn--offer btn--sm header__offers">Ofertas</a>
+      <a href="#/ofertas" class="btn btn--gold btn--sm header__offers">Ver ofertas ↗</a>
       <button class="icon-btn cart-btn" id="cartBtn" aria-label="Abrir pedido">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L22 7H6"/></svg>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L22 7H6"/></svg>
         <span class="cart-btn__count" id="cartCount" hidden>0</span>
       </button>
       <button class="icon-btn menu-btn" id="menuBtn" aria-label="Abrir menú">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
     </div>
-    <div class="catbar"><div class="container catbar__inner" id="catbar"></div></div>
   </header>
+
+  <div class="search-wrap">
+    <form class="search container" id="searchForm" role="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="searchInput" placeholder="Buscar un producto..." autocomplete="off" aria-label="Buscar productos">
+      <ul class="search__suggest" id="searchSuggest" hidden></ul>
+    </form>
+  </div>
+
+  <div class="container">
+    <div class="catbar" id="catbar"></div>
+  </div>
 
   <main id="app" class="main" tabindex="-1"></main>
 
