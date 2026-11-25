@@ -788,32 +788,50 @@
   }
 
   const INFO = {
-    nosotros: () => `<h1>Nosotros</h1>
-      <p>Somos una dietética de barrio que se volvió online. Seleccionamos frutos secos, semillas, legumbres y productos de almacén natural de productores que conocemos, y los fraccionamos en el día para que lleguen frescos a tu casa.</p>
-      <p>Creemos en comer rico, simple y a precios justos.</p>`,
-    "como-comprar": () => `<h1>Cómo comprar</h1>
+    nosotros: () => `<span class="info__eyebrow">Quiénes somos</span>
+      <h1>Nosotros</h1>
+      <p class="info__lead">Somos una dietética de barrio que se volvió online.</p>
+      <p>Seleccionamos frutos secos, semillas, legumbres y productos de almacén natural de productores que conocemos, y los fraccionamos en el día para que lleguen frescos a tu casa.</p>
+      <ul class="info-cards">
+        <li><b>Naturales</b><span>Productos simples, sin vueltas.</span></li>
+        <li><b>Frescos</b><span>Fraccionamos en el día.</span></li>
+        <li><b>Precios justos</b><span>Comer rico no tiene que ser caro.</span></li>
+      </ul>`,
+    "como-comprar": () => `<span class="info__eyebrow">Paso a paso</span>
+      <h1>Cómo comprar</h1>
+      <p class="info__lead">Hacer tu pedido lleva un par de minutos.</p>
       <ol class="steps">
-        <li><b>Elegí tus productos</b><br>Navegá por categorías o usá el buscador. Elegí la presentación y la cantidad.</li>
-        <li><b>Revisá tu pedido</b><br>Desde la barra inferior “Ver pedido” podés ajustar cantidades.</li>
-        <li><b>Completá tus datos</b><br>Indicá si querés envío o retiro, y cómo vas a pagar.</li>
-        <li><b>Enviá el pedido por WhatsApp</b><br>Te confirmamos stock, total y horario de entrega.</li>
+        <li><b>Elegí tus productos</b><span>Navegá por categorías o usá el buscador. Elegí la presentación y la cantidad.</span></li>
+        <li><b>Revisá tu pedido</b><span>Desde la barra inferior “Ver pedido” podés ajustar cantidades.</span></li>
+        <li><b>Completá tus datos</b><span>Indicá si querés envío o retiro, y cómo vas a pagar.</span></li>
+        <li><b>Enviá el pedido por WhatsApp</b><span>Te confirmamos stock, total y horario de entrega.</span></li>
       </ol>`,
-    envios: () => `<h1>Envíos y retiro</h1>
-      <p><b>Envío a domicilio</b> en ${esc(STORE.city)}: ${money(STORE.shippingCost)}. <b>Gratis</b> en compras desde ${money(STORE.freeShippingFrom)}.</p>
-      <p><b>Retiro en el local</b> sin cargo, de lunes a sábado.</p>
-      <p>Los pedidos confirmados antes de las 13 hs se entregan en el día o al siguiente día hábil.</p>`,
-    faq: () => `<h1>Preguntas frecuentes</h1>
-      <details open><summary>¿Los productos son sueltos o envasados?</summary><p>Fraccionamos a granel y envasamos al vacío o en bolsas con cierre en el momento.</p></details>
-      <details><summary>¿Tienen productos aptos celíacos?</summary><p>Sí, los marcados como “Sin TACC” son de origen certificado. Consultá por contaminación cruzada en productos fraccionados.</p></details>
-      <details><summary>¿Qué medios de pago aceptan?</summary><p>Efectivo, transferencia (con ${STORE.transferDiscount * 100}% OFF) y Mercado Pago.</p></details>
-      <details><summary>¿Puedo modificar mi pedido?</summary><p>Sí, escribinos por WhatsApp antes de que salga a reparto.</p></details>`,
-    contacto: () => `<h1>Contacto</h1>
+    envios: () => `<span class="info__eyebrow">Entregas</span>
+      <h1>Envíos y retiro</h1>
+      <p class="info__lead">Elegí la opción que te quede más cómoda.</p>
       <ul class="info-list">
-        <li><span>Dirección</span>Av. Ejemplo 1234</li>
-        <li><span>Horarios</span>Lunes a sábado de 9 a 13 y de 16 a 20 hs</li>
-        <li><span>WhatsApp</span>Respondemos consultas y tomamos pedidos</li>
+        <li><span>Envío a domicilio</span><div>En ${esc(STORE.city)}: ${money(STORE.shippingCost)}.<br><b>Gratis</b> en compras desde ${money(STORE.freeShippingFrom)}.</div></li>
+        <li><span>Retiro en el local</span><div>Sin cargo, de lunes a sábado.</div></li>
+        <li><span>Tiempos</span><div>Los pedidos confirmados antes de las 13 hs se entregan en el día o al siguiente día hábil.</div></li>
+      </ul>`,
+    faq: () => `<span class="info__eyebrow">Ayuda</span>
+      <h1>Preguntas frecuentes</h1>
+      <p class="info__lead">Lo que más nos consultan.</p>
+      <div class="faq">
+        <details open><summary>¿Los productos son sueltos o envasados?</summary><p>Fraccionamos a granel y envasamos al vacío o en bolsas con cierre en el momento.</p></details>
+        <details><summary>¿Tienen productos aptos celíacos?</summary><p>Sí, los marcados como “Sin TACC” son de origen certificado. Consultá por contaminación cruzada en productos fraccionados.</p></details>
+        <details><summary>¿Qué medios de pago aceptan?</summary><p>Efectivo, transferencia (con ${STORE.transferDiscount * 100}% OFF) y Mercado Pago.</p></details>
+        <details><summary>¿Puedo modificar mi pedido?</summary><p>Sí, escribinos por WhatsApp antes de que salga a reparto.</p></details>
+      </div>`,
+    contacto: () => `<span class="info__eyebrow">Estamos para ayudarte</span>
+      <h1>Contacto</h1>
+      <p class="info__lead">Escribinos o pasá por el local.</p>
+      <ul class="info-list">
+        <li><span>Dirección</span><div>Av. Ejemplo 1234</div></li>
+        <li><span>Horarios</span><div>Lunes a sábado de 9 a 13 y de 16 a 20 hs</div></li>
+        <li><span>WhatsApp</span><div>Respondemos consultas y tomamos pedidos</div></li>
       </ul>
-      <a class="btn btn--wa" href="${waLink("Hola! Quería hacer una consulta")}" target="_blank" rel="noopener">Escribinos por WhatsApp</a>`
+      <a class="btn info__cta" href="${waLink("Hola! Quería hacer una consulta")}" target="_blank" rel="noopener">Escribinos por WhatsApp</a>`
   };
 
   function viewInfo(page) {

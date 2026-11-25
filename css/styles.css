@@ -684,3 +684,67 @@ body.has-orderbar.no-catbar .footer { padding-bottom: 100px; }
 .footer__grid > div:nth-child(2) ul { column-gap: 32px; }
 .footer__grid li { white-space: nowrap; }
 @media (max-width: 980px) { .footer__grid { grid-template-columns: 1fr 1fr; } .footer__grid li { white-space: normal; } }
+
+/* =========================================================
+   Páginas informativas en verde oscuro (#213F2F)
+   ========================================================= */
+body.no-catbar { background: var(--forest); color: #e4ecdf; }
+body.no-catbar .page { background: transparent; box-shadow: none; padding: 56px 0 80px; }
+body.no-catbar .info { max-width: 720px; }
+
+/* Botón volver */
+body.no-catbar .back-btn { color: #fff; border-color: rgba(255,255,255,.35); margin-bottom: 44px; }
+body.no-catbar .back-btn:hover { background: rgba(255,255,255,.08); border-color: #fff; }
+
+/* Títulos y textos */
+.info__eyebrow { display: block; font-size: .74rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--pistachio); margin-bottom: 10px; }
+body.no-catbar .info h1 { color: #fff; font-size: clamp(2.4rem, 5vw, 3.4rem); margin: 0 0 18px; line-height: 1.05; }
+.info__lead { font-size: 1.2rem; color: #fff !important; margin: 0 0 26px !important; }
+body.no-catbar .info p { color: #cfdacb; line-height: 1.8; margin: 0 0 22px; }
+body.no-catbar .info b { color: #fff; }
+
+/* Listas de datos (contacto, envíos) */
+body.no-catbar .info-list { border-top: 1px solid rgba(255,255,255,.14); margin: 8px 0 40px; max-width: none; }
+body.no-catbar .info-list li { grid-template-columns: 190px 1fr; gap: 24px; padding: 22px 0; border-bottom: 1px solid rgba(255,255,255,.14); color: #fff; line-height: 1.6; }
+body.no-catbar .info-list span { color: var(--pistachio); padding-top: 4px; }
+
+/* Pasos (cómo comprar) */
+body.no-catbar .steps { gap: 14px; margin-top: 8px; }
+body.no-catbar .steps li { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); padding: 22px 24px 22px 76px; display: grid; gap: 6px; line-height: 1.6; }
+body.no-catbar .steps li::before { left: 24px; top: 22px; width: 34px; height: 34px; background: var(--pistachio); color: var(--forest); }
+body.no-catbar .steps li span { color: #cfdacb; }
+
+/* Tarjetas (nosotros) */
+.info-cards { list-style: none; padding: 0; margin: 34px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.info-cards li { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-top: 3px solid var(--pistachio); border-radius: 4px; padding: 20px; display: grid; gap: 6px; }
+.info-cards b { color: #fff; font-size: 1.05rem; }
+.info-cards span { color: #cfdacb; font-size: .92rem; line-height: 1.55; }
+
+/* Preguntas frecuentes */
+body.no-catbar .faq { border-top: 1px solid rgba(255,255,255,.14); margin-top: 8px; }
+body.no-catbar .info details { border-bottom: 1px solid rgba(255,255,255,.14); padding: 0; }
+body.no-catbar .info summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px 0; color: #fff; font-size: 1.05rem; }
+body.no-catbar .info summary::-webkit-details-marker { display: none; }
+body.no-catbar .info summary::after { content: "+"; color: var(--pistachio); font-size: 1.5rem; font-weight: 400; line-height: 1; transition: transform .25s; }
+body.no-catbar .info details[open] summary::after { transform: rotate(45deg); }
+body.no-catbar .info details p { margin: -6px 0 22px; padding-right: 40px; }
+
+/* Botón principal (contacto) */
+.info__cta { background: var(--pistachio); color: var(--forest); padding: 14px 26px; }
+.info__cta:hover { background: #dfe8b0; }
+
+/* Pie fino en las mismas páginas: mismo verde con una línea fina de división */
+body.no-catbar .footer { background: var(--forest); color: #cfdacb; }
+body.no-catbar .footer .footer__thin { border-top: 1px solid rgba(255,255,255,.14); padding-block: 18px; }
+body.no-catbar .footer a, body.no-catbar .footer__brand { color: #e4ecdf; }
+body.no-catbar .footer__copy { color: #aebcaa; opacity: 1; }
+
+@media (max-width: 640px) {
+  body.no-catbar .page { padding: 36px 4px 56px; }
+  body.no-catbar .back-btn { margin-bottom: 32px; }
+  body.no-catbar .info-list li { grid-template-columns: 1fr; gap: 6px; padding: 18px 0; }
+  body.no-catbar .steps li { padding: 18px 18px 18px 66px; }
+  body.no-catbar .steps li::before { left: 18px; top: 18px; }
+  .info-cards { grid-template-columns: 1fr; }
+  body.no-catbar .info details p { padding-right: 0; }
+}
