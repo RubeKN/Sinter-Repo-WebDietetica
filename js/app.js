@@ -172,13 +172,6 @@
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Centra la categoría activa con un desplazamiento suave (sin saltos).
-  function centerChip(track, chip, smooth) {
-    if (!chip) return;
-    const left = chip.offsetLeft - (track.clientWidth - chip.offsetWidth) / 2;
-    track.scrollTo({ left: Math.max(0, left), behavior: smooth && !reduceMotion ? "smooth" : "auto" });
-  }
-
   /* ---------------- Scroll suave ---------------- */
   const header = $("#header");
   let scrollAnim = null;
@@ -253,45 +246,131 @@
     smoothScrollTo(Math.max(y, HIDE_AT + 2));
   }
 
+  /* ---------------- Barra de categorías (por páginas) ----------------
+     Nunca se muestra una categoría cortada: se calculan "páginas" con las
+     categorías que entran completas y las flechas pasan de una página a otra.
+     Las categorías de la página se estiran para ocupar todo el ancho. */
   function renderCatbar(active) {
-    const existing = $(".catbar__chips", $("#catbar"));
-
-    // Si la barra ya existe, solo movemos el estado activo: así la línea dorada
-    // y el desplazamiento se animan en lugar de redibujar todo de golpe.
-    if (existing) {
-      $$(".chip", existing).forEach((c) => c.classList.toggle("active", c.dataset.key === active));
-      centerChip(existing, $(".chip.active", existing), true);
-      return;
-    }
+    const bar = $("#catbar");
+    if (bar._cat) { bar._cat.setActive(active); return; }
 
     const chip = (k, href, label, extra = "") =>
       `<a class="chip ${extra} ${active === k ? "active" : ""}" data-key="${k}" href="${href}">${label}</a>`;
     const chips = [chip("productos", "#/productos", "Todo"), chip("novedades", "#/novedades", "Novedades", "chip--new")]
       .concat(CATEGORIES.map((c) => chip(c.id, `#/categoria/${c.id}`, esc(c.name))))
       .concat(chip("ofertas", "#/ofertas", "Ofertas", "chip--offer"));
-    $("#catbar").innerHTML = `      <div class="catbar__scroller">
+    bar.innerHTML = `<div class="catbar__scroller">
         <button class="catbar__arrow catbar__arrow--prev" data-dir="-1" aria-label="Ver categorías anteriores" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="catbar__chips">${chips.join("")}</div>
         <button class="catbar__arrow catbar__arrow--next" data-dir="1" aria-label="Ver más categorías" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>`;
-    const track = $(".catbar__chips", $("#catbar"));
-    const prev = $(".catbar__arrow--prev", $("#catbar"));
-    const next = $(".catbar__arrow--next", $("#catbar"));
-    const update = () => {
-      const max = track.scrollWidth - track.clientWidth;
-      prev.hidden = track.scrollLeft <= 4;
-      next.hidden = track.scrollLeft >= max - 4;
+    const scroller = $(".catbar__scroller", bar);
+    const track = $(".catbar__chips", bar);
+    const prev = $(".catbar__arrow--prev", bar);
+    const next = $(".catbar__arrow--next", bar);
+    const items = $$(".chip", track);
+    let pages = [[0, items.length]];
+    let page = 0;
+    let lastW = 0;
+    let userPaged = false;   // si la persona usó las flechas, respetamos su página al redimensionar
+
+    // Calcula qué categorías entran completas en cada página.
+    function measure() {
+      items.forEach((c) => { c.hidden = false; });
+      track.classList.add("is-measuring");
+      const widths = items.map((c) => Math.ceil(c.getBoundingClientRect().width));
+      track.classList.remove("is-measuring");
+      const wasHidden = prev.hidden;
+      prev.hidden = false;
+      const A = prev.offsetWidth;            // ancho de una flecha
+      prev.hidden = wasHidden;
+      const W = scroller.clientWidth;
+      pages = [];
+      let start = 0;
+      while (start < items.length) {
+        const left = start > 0 ? A : 0;      // flecha "anterior" si no es la primera página
+        const rest = widths.slice(start).reduce((x, y) => x + y, 0);
+        if (rest <= W - left) { pages.push([start, items.length]); break; }
+        const avail = W - left - A;          // reservamos la flecha "siguiente"
+        let end = start, sum = 0;
+        while (end < items.length && sum + widths[end] <= avail) { sum += widths[end]; end++; }
+        if (end === start) end = start + 1;  // al menos una categoría por página
+        pages.push([start, end]);
+        start = end;
+      }
+      // La última página se completa "hacia atrás" para que no quede con pocas categorías estiradas.
+      if (pages.length > 1) {
+        let st = items.length, sum = 0;
+        while (st > 0 && sum + widths[st - 1] <= W - A) { sum += widths[st - 1]; st--; }
+        pages = pages.slice(0, -1).filter(([s0]) => s0 < st).concat([[st, items.length]]);
+      }
+    }
+
+    function show(n, dir = 0) {
+      page = Math.max(0, Math.min(n, pages.length - 1));
+      const [s0, e0] = pages[page];
+      items.forEach((c, i) => {
+        c.hidden = i < s0 || i >= e0;
+        c.classList.toggle("is-first", i === s0);
+      });
+      prev.hidden = page === 0;
+      next.hidden = page === pages.length - 1;
+      if (dir && !reduceMotion) {
+        track.classList.remove("slide-next", "slide-prev");
+        void track.offsetWidth;
+        track.classList.add(dir > 0 ? "slide-next" : "slide-prev");
+      }
+    }
+
+    const pageOf = (key) => {
+      const i = items.findIndex((c) => c.dataset.key === key);
+      return i < 0 ? -1 : pages.findIndex(([s0, e0]) => i >= s0 && i < e0);
     };
-    [prev, next].forEach((b) => b.addEventListener("click", () => {
-      track.scrollBy({ left: Number(b.dataset.dir) * track.clientWidth * 0.7, behavior: reduceMotion ? "auto" : "smooth" });
+
+    function relayout() {
+      const W = scroller.clientWidth;
+      if (!W || W === lastW) return;
+      lastW = W;
+      const firstKey = items[pages[page] ? pages[page][0] : 0].dataset.key;
+      measure();
+      let p = pageOf(firstKey);
+      const act = $(".chip.active", track);
+      if (act && !userPaged) p = pageOf(act.dataset.key);
+      show(Math.max(0, p));
+    }
+
+    [prev, next].forEach((btn) => btn.addEventListener("click", () => {
+      userPaged = true;
+      show(page + Number(btn.dataset.dir), Number(btn.dataset.dir));
     }));
-    track.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    // Cuando aparece el buscador en la barra, el espacio de las categorías se achica:
-    // recalculamos las flechas para que la de "más" siempre esté si hay categorías ocultas.
-    if ("ResizeObserver" in window) new ResizeObserver(update).observe(track);
-    $("#barSearchForm").addEventListener("transitionend", update);
-    requestAnimationFrame(() => { centerChip(track, $(".chip.active", track), false); update(); });
+
+    // Deslizar con el dedo pasa de página
+    let x0 = null;
+    track.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener("touchend", (e) => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      x0 = null;
+      if (Math.abs(dx) > 40) {
+        const dir = dx < 0 ? 1 : -1;
+        if ((dir > 0 && page < pages.length - 1) || (dir < 0 && page > 0)) show(page + dir, dir);
+      }
+    });
+
+    // Recalcular cuando cambia el ancho (ventana o aparece el buscador en la barra)
+    if ("ResizeObserver" in window) new ResizeObserver(relayout).observe(scroller);
+    window.addEventListener("resize", relayout);
+    // Las fuentes pueden cambiar el ancho de las categorías: medir de nuevo al cargarlas
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { lastW = 0; relayout(); });
+
+    bar._cat = {
+      setActive(key) {
+        items.forEach((c) => c.classList.toggle("active", c.dataset.key === key));
+        const p = pageOf(key);
+        if (p >= 0 && p !== page) show(p, p > page ? 1 : -1);
+      }
+    };
+    requestAnimationFrame(relayout);
   }
 
   /* ---------------- Countdown ---------------- */

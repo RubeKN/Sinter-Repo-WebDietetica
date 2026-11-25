@@ -131,7 +131,7 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 }
 .search--bar:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); background: #fff; }
 .catbar__scroller { position: relative; flex: 1; min-width: 0; display: flex; }
-.catbar__chips { display: flex; flex: 1; overflow-x: auto; scrollbar-width: none; }
+.catbar__chips { display: flex; flex: 1; min-width: 0; overflow: hidden; }
 .catbar__chips::-webkit-scrollbar { display: none; }
 .chip {
   position: relative; flex: 1 0 auto; display: flex; align-items: center; justify-content: center; padding: 0 20px;
@@ -520,3 +520,12 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
     content: ""; position: absolute; left: -17px; top: 0; bottom: 0; width: 1px; background: rgba(44,58,26,.2);
   }
 }
+
+/* Barra por páginas: nunca hay categorías cortadas */
+.catbar__chips.is-measuring .chip { flex: 0 0 auto; }
+.chip.is-first::before { display: none; }
+.catbar__arrow--next::before, .catbar__arrow--prev::after { display: none; }   /* sin degradado: nada queda cortado */
+.catbar__chips.slide-next .chip { animation: chipsNext .35s cubic-bezier(.22,.61,.36,1); }
+.catbar__chips.slide-prev .chip { animation: chipsPrev .35s cubic-bezier(.22,.61,.36,1); }
+@keyframes chipsNext { from { opacity: 0; transform: translateX(28px); } }
+@keyframes chipsPrev { from { opacity: 0; transform: translateX(-28px); } }
