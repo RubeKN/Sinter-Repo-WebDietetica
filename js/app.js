@@ -948,7 +948,6 @@
     const items = Array.from({ length: 6 }, (_, i) => `<span>${i % 2 ? extra : msg}</span>`).join("");
     $("#marquee").innerHTML = items + items;
 
-    $("#footerCats").innerHTML = CATEGORIES.map((c) => `<li><a href="#/categoria/${c.id}">${esc(c.name)}</a></li>`).join("");
     $("#menuList").innerHTML = `
       <a href="#/">Inicio</a>
       <a href="#/info/nosotros">Nosotros</a><a href="#/info/como-comprar">Cómo comprar</a><a href="#/info/contacto">Contacto</a>
