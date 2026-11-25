@@ -656,3 +656,31 @@ body.no-catbar .footer .footer__thin { display: flex; border-top: 1px solid var(
   .footer__row { flex-direction: column; justify-content: center; text-align: center; gap: 8px; padding-block: 16px; }
   .footer__links { justify-content: center; gap: 4px 14px; }
 }
+
+/* ---------- Pie de página verde oscuro (#213F2F), más espaciado ---------- */
+:root { --forest: #213f2f; }
+.footer { background: var(--forest); color: #e4ecdf; padding-top: 44px; margin-top: 56px; }
+.footer__grid { gap: 48px; }
+.footer .logo__name, .footer .logo--footer { color: #fff; }
+.footer p { color: #c9d6c6; line-height: 1.65; margin-top: 10px; }
+.footer h4 { color: var(--pistachio); margin: 4px 0 14px; }
+.footer ul { gap: 9px; }
+.footer a { color: #e4ecdf; }
+.footer a:hover { color: #fff; }
+.footer__bottom { margin-top: 36px; padding: 18px 0 22px; border-top: 1px solid rgba(255,255,255,.14); color: #aebcaa; }
+/* Con la barra "Ver pedido" visible, el pie termina por encima de ella */
+body.has-orderbar .footer { padding-bottom: 0; }
+body.has-orderbar .footer__bottom { padding-bottom: 116px; }
+/* Las páginas informativas mantienen su franja marrón clara */
+body.no-catbar .footer { color: var(--ink); padding-top: 0; margin-top: 0; }
+body.no-catbar .footer a { color: var(--ink); }
+body.has-orderbar.no-catbar .footer { padding-bottom: 100px; }
+@media (max-width: 640px) {
+  .footer { padding-top: 32px; margin-top: 40px; }
+  .footer__grid { gap: 28px 20px; }
+  .footer__bottom { margin-top: 26px; }
+}
+.footer__grid { grid-template-columns: 1.3fr 1.2fr 1fr; }
+.footer__grid > div:nth-child(2) ul { column-gap: 32px; }
+.footer__grid li { white-space: nowrap; }
+@media (max-width: 980px) { .footer__grid { grid-template-columns: 1fr 1fr; } .footer__grid li { white-space: normal; } }
