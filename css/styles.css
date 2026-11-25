@@ -472,3 +472,12 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 /* Header: ocultar links cuando no entra todo */
 @media (max-width: 1250px) { .header__links { display: none; } }
 .header__offers { white-space: nowrap; flex: none; }
+
+/* Celular: en el header solo logo, carrito y menú (☰ bien a la derecha).
+   "Ver ofertas", Nosotros, Cómo comprar y Contacto quedan dentro del menú. */
+@media (max-width: 768px) {
+  .header__offers, .header__links { display: none; }
+  .logo { margin-right: auto; }
+  .cart-btn { margin-left: auto; }
+}
+.menu-list .menu-offer { color: var(--red); }
