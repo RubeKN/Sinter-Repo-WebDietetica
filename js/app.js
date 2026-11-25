@@ -178,6 +178,63 @@
     track.scrollTo({ left: Math.max(0, left), behavior: smooth && !reduceMotion ? "smooth" : "auto" });
   }
 
+  /* ---------------- Scroll suave ---------------- */
+  const header = $("#header");
+  let scrollAnim = null;
+
+  // Animación de scroll propia (más suave y pareja que la nativa).
+  function smoothScrollTo(targetY, duration = 550) {
+    cancelAnimationFrame(scrollAnim);
+    const startY = window.scrollY;
+    const maxY = document.documentElement.scrollHeight - window.innerHeight;
+    const endY = Math.max(0, Math.min(targetY, maxY));
+    const dist = endY - startY;
+    if (Math.abs(dist) < 2) return;
+    if (reduceMotion) { window.scrollTo(0, endY); return; }
+    // Si el recorrido es largo, saltamos cerca del destino (oculto por el fade del contenido)
+    // y hacemos un deslizamiento corto: se siente suave en vez de "viajar" por toda la página.
+    const GLIDE = 220;
+    let from = startY;
+    if (Math.abs(dist) > GLIDE * 2) {
+      from = endY - Math.sign(dist) * GLIDE;
+      window.scrollTo(0, from);
+    }
+    const d = endY - from;
+    const t0 = performance.now();
+    const ease = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / duration);
+      window.scrollTo(0, from + d * ease(t));
+      if (t < 1) scrollAnim = requestAnimationFrame(step);
+    };
+    scrollAnim = requestAnimationFrame(step);
+  }
+  // Si la persona usa la rueda o el dedo, se corta la animación.
+  ["wheel", "touchstart", "keydown"].forEach((ev) => window.addEventListener(ev, () => cancelAnimationFrame(scrollAnim), { passive: true }));
+
+  // Header compacto al bajar
+  const COMPACT_AT = 60;
+  const onScrollHeader = () => header.classList.toggle("is-compact", window.scrollY > COMPACT_AT);
+  window.addEventListener("scroll", onScrollHeader, { passive: true });
+
+  // Alto del header en modo compacto (para saber dónde dejar el contenido).
+  function compactHeaderHeight() {
+    const was = header.classList.contains("is-compact");
+    header.classList.add("no-anim", "is-compact");
+    const h = header.offsetHeight;
+    header.classList.toggle("is-compact", was);
+    void header.offsetHeight;
+    header.classList.remove("no-anim");
+    return h;
+  }
+
+  // Lleva la vista al inicio del contenido (título de la categoría), justo debajo del header fijo.
+  function scrollToContent() {
+    const y = app.getBoundingClientRect().top + window.scrollY - compactHeaderHeight() + 8;
+    // Siempre por encima del umbral, así el header queda compacto y el cálculo coincide.
+    smoothScrollTo(Math.max(y, COMPACT_AT + 2));
+  }
+
   function renderCatbar(active) {
     const existing = $(".catbar__chips", $("#catbar"));
 
@@ -611,7 +668,11 @@
     app.classList.toggle("page-enter", false);
     void app.offsetWidth;
     app.classList.add("page-enter");
-    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+    // Listados (categorías, ofertas, búsqueda): ir al inicio de los productos.
+    // Resto de páginas: volver arriba de todo.
+    if (["productos", "ofertas", "categoria", "buscar"].includes(a)) scrollToContent();
+    else smoothScrollTo(0);
+    onScrollHeader();
     app.focus({ preventScroll: true });
   }
 
