@@ -419,7 +419,6 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 .footer ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
 .footer a:hover { text-decoration: underline; }
 .footer__bottom { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: .8rem; padding: 12px 0 14px; margin-top: 22px; border-top: 1px solid rgba(44,58,26,.18); }
-body.has-orderbar .footer__bottom { padding-bottom: 92px; }   /* lugar para la barra "Ver pedido" */
 
 .toast {
   position: fixed; left: 50%; top: 90px; transform: translate(-50%, -160px); background: var(--ink); color: #fff; border-left: 5px solid var(--pistachio);
@@ -620,3 +619,31 @@ body.no-catbar .page { padding: 40px 48px 56px; }
   .footer__grid { gap: 14px 16px; }
   .footer__grid > div:nth-child(2) ul { grid-template-columns: 1fr; }
 }
+
+/* Logo */
+.logo__img { width: 40px; height: 40px; display: block; flex: none; }
+
+/* Páginas informativas (contacto, ayuda, nosotros): fondo distinto */
+body.no-catbar { background: var(--pistachio-light); }
+body.no-catbar .page { box-shadow: 0 10px 30px rgba(44,58,26,.08); }
+
+/* Pie de página simple y fino: una sola franja */
+.footer { padding: 0; margin-top: 40px; background: var(--pistachio); }
+.footer__row { display: flex; align-items: center; justify-content: space-between; gap: 10px 24px; flex-wrap: wrap; min-height: 54px; padding-block: 12px; font-size: .84rem; }
+.footer__brand { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--ink); }
+.footer__brand img { display: block; }
+.footer__links { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.footer__links a { color: var(--ink); opacity: .85; }
+.footer__links a:hover { opacity: 1; text-decoration: underline; }
+.footer__copy { color: var(--ink); opacity: .7; font-size: .78rem; }
+body.has-orderbar .footer { padding-bottom: 80px; }   /* lugar para la barra "Ver pedido" */
+@media (max-width: 760px) {
+  .footer { margin-top: 28px; }
+  .footer__row { flex-direction: column; justify-content: center; text-align: center; gap: 8px; padding-block: 16px; }
+  .footer__links { justify-content: center; gap: 4px 14px; }
+}
+
+/* El pie siempre queda abajo de todo: en páginas cortas el contenido se estira, no el pie */
+body { display: flex; flex-direction: column; min-height: 100vh; }
+.main { flex: 1 0 auto; }
+.footer { flex: none; }
