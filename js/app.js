@@ -308,6 +308,7 @@
 
     function show(n, dir = 0) {
       page = Math.max(0, Math.min(n, pages.length - 1));
+      track.scrollLeft = 0;
       const [s0, e0] = pages[page];
       items.forEach((c, i) => {
         c.hidden = i < s0 || i >= e0;
@@ -338,6 +339,9 @@
       if (act && !userPaged) p = pageOf(act.dataset.key);
       show(Math.max(0, p));
     }
+
+    // La lista nunca se desplaza sola (p. ej. al enfocar una categoría): así no queda nada cortado.
+    track.addEventListener("scroll", () => { if (track.scrollLeft) track.scrollLeft = 0; });
 
     [prev, next].forEach((btn) => btn.addEventListener("click", () => {
       userPaged = true;
