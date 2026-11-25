@@ -770,3 +770,8 @@ body.no-catbar .info.info-layout { max-width: none; }
 /* Botones "Ver y pedir" en el mismo verde del pie de página */
 .card .btn { background: var(--forest); color: #fff; }
 .card .btn:hover { background: #2d5440; }
+
+/* El menú y el carrito siempre con texto oscuro (no heredan el texto claro de las páginas verdes) */
+.drawer, .search__suggest, .toast { color: var(--text); }
+.drawer .menu-list a { color: var(--ink); }
+.drawer .menu-list .menu-offer { color: var(--red); }
