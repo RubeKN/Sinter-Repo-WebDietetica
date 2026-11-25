@@ -27,6 +27,9 @@ a { color: inherit; text-decoration: none; }
 button { font: inherit; cursor: pointer; color: inherit; }
 input, select, textarea { font: inherit; color: inherit; }
 .container { width: min(1100px, 100% - 32px); margin-inline: auto; }
+.page-enter { animation: pageIn .45s cubic-bezier(.22,.61,.36,1); }
+@keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page-enter { animation: none; } }
 .main { outline: none; min-height: 50vh; }
 h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em; }
 
@@ -101,15 +104,15 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
   linear-gradient(var(--green-deep) 0 0) 0 0 / 5px 5px no-repeat, linear-gradient(var(--green-deep) 0 0) 100% 0 / 5px 5px no-repeat,
   linear-gradient(var(--green-deep) 0 0) 0 100% / 5px 5px no-repeat, linear-gradient(var(--green-deep) 0 0) 100% 100% / 5px 5px no-repeat; }
 .catbar__scroller { position: relative; flex: 1; min-width: 0; display: flex; }
-.catbar__chips { display: flex; flex: 1; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
+.catbar__chips { display: flex; flex: 1; overflow-x: auto; scrollbar-width: none; }
 .catbar__chips::-webkit-scrollbar { display: none; }
 .chip {
   position: relative; flex: 1 0 auto; display: flex; align-items: center; justify-content: center; padding: 0 20px;
   white-space: nowrap; font-weight: 600; font-size: .88rem; color: rgba(255,255,255,.85); letter-spacing: .01em;
-  transition: color .15s, background .15s;
+  transition: color .3s ease, background .3s ease;
 }
 .chip + .chip::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 1px; background: rgba(255,255,255,.14); }
-.chip::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--gold); transform: scaleX(0); transition: transform .2s; }
+.chip::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--gold); transform: scaleX(0); transition: transform .35s cubic-bezier(.22,.61,.36,1); }
 .chip:hover { color: #fff; background: rgba(255,255,255,.05); }
 .chip:hover::after { transform: scaleX(1); }
 .chip.active { color: var(--gold); background: rgba(0,0,0,.18); font-weight: 800; }

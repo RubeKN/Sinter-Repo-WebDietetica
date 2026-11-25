@@ -169,10 +169,31 @@
     </article>`;
   }
 
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Centra la categoría activa con un desplazamiento suave (sin saltos).
+  function centerChip(track, chip, smooth) {
+    if (!chip) return;
+    const left = chip.offsetLeft - (track.clientWidth - chip.offsetWidth) / 2;
+    track.scrollTo({ left: Math.max(0, left), behavior: smooth && !reduceMotion ? "smooth" : "auto" });
+  }
+
   function renderCatbar(active) {
-    const chips = [`<a class="chip ${active === "productos" ? "active" : ""}" href="#/productos">Todo</a>`]
-      .concat(CATEGORIES.map((c) => `<a class="chip ${active === c.id ? "active" : ""}" href="#/categoria/${c.id}">${esc(c.name)}</a>`))
-      .concat(`<a class="chip chip--offer ${active === "ofertas" ? "active" : ""}" href="#/ofertas">Ofertas</a>`);
+    const existing = $(".catbar__chips", $("#catbar"));
+
+    // Si la barra ya existe, solo movemos el estado activo: así la línea dorada
+    // y el desplazamiento se animan en lugar de redibujar todo de golpe.
+    if (existing) {
+      $$(".chip", existing).forEach((c) => c.classList.toggle("active", c.dataset.key === active));
+      centerChip(existing, $(".chip.active", existing), true);
+      return;
+    }
+
+    const chip = (k, href, label, extra = "") =>
+      `<a class="chip ${extra} ${active === k ? "active" : ""}" data-key="${k}" href="${href}">${label}</a>`;
+    const chips = [chip("productos", "#/productos", "Todo")]
+      .concat(CATEGORIES.map((c) => chip(c.id, `#/categoria/${c.id}`, esc(c.name))))
+      .concat(chip("ofertas", "#/ofertas", "Ofertas", "chip--offer"));
     $("#catbar").innerHTML = `<span class="catbar__label">Categorías</span>
       <div class="catbar__scroller">
         <button class="catbar__arrow catbar__arrow--prev" data-dir="-1" aria-label="Ver categorías anteriores" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -188,15 +209,11 @@
       next.hidden = track.scrollLeft >= max - 4;
     };
     [prev, next].forEach((b) => b.addEventListener("click", () => {
-      track.scrollBy({ left: Number(b.dataset.dir) * track.clientWidth * 0.7, behavior: "smooth" });
+      track.scrollBy({ left: Number(b.dataset.dir) * track.clientWidth * 0.7, behavior: reduceMotion ? "auto" : "smooth" });
     }));
     track.addEventListener("scroll", update, { passive: true });
-    window.removeEventListener("resize", renderCatbar.onResize || (() => {}));
-    renderCatbar.onResize = update;
     window.addEventListener("resize", update);
-    const act = $(".chip.active", track);
-    if (act) act.scrollIntoView({ block: "nearest", inline: "center" });
-    requestAnimationFrame(update);
+    requestAnimationFrame(() => { centerChip(track, $(".chip.active", track), false); update(); });
   }
 
   /* ---------------- Countdown ---------------- */
@@ -590,7 +607,11 @@
     else viewNotFound();
 
     renderCartUI();
-    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    // Transición suave entre páginas: fade del contenido + scroll animado hacia arriba.
+    app.classList.toggle("page-enter", false);
+    void app.offsetWidth;
+    app.classList.add("page-enter");
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
     app.focus({ preventScroll: true });
   }
 
