@@ -623,27 +623,36 @@ body.no-catbar .page { padding: 40px 48px 56px; }
 /* Logo */
 .logo__img { width: 40px; height: 40px; display: block; flex: none; }
 
-/* Páginas informativas (contacto, ayuda, nosotros): fondo distinto */
-body.no-catbar { background: var(--pistachio-light); }
-body.no-catbar .page { box-shadow: 0 10px 30px rgba(44,58,26,.08); }
+/* El pie siempre queda abajo de todo: en páginas cortas el contenido se estira, no el pie */
+body { display: flex; flex-direction: column; min-height: 100vh; }
+.main { flex: 1 0 auto; }
+.footer { flex: none; }
 
-/* Pie de página simple y fino: una sola franja */
-.footer { padding: 0; margin-top: 40px; background: var(--pistachio); }
-.footer__row { display: flex; align-items: center; justify-content: space-between; gap: 10px 24px; flex-wrap: wrap; min-height: 54px; padding-block: 12px; font-size: .84rem; }
+/* ---------- Pie de página: completo en el sitio, fino en las páginas informativas ---------- */
+.footer { padding: 22px 0 0; margin-top: 40px; background: var(--pistachio); }
+.footer .footer__thin { display: none; }
+body.has-orderbar .footer { padding-bottom: 80px; }   /* lugar para la barra "Ver pedido" */
+.footer .logo__img { width: 30px; height: 30px; }
+
+.footer__row { display: flex; align-items: center; justify-content: space-between; gap: 10px 24px; flex-wrap: wrap; min-height: 52px; padding-block: 12px; font-size: .84rem; }
 .footer__brand { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--ink); }
 .footer__brand img { display: block; }
 .footer__links { display: flex; flex-wrap: wrap; gap: 4px 20px; }
 .footer__links a { color: var(--ink); opacity: .85; }
 .footer__links a:hover { opacity: 1; text-decoration: underline; }
 .footer__copy { color: var(--ink); opacity: .7; font-size: .78rem; }
-body.has-orderbar .footer { padding-bottom: 80px; }   /* lugar para la barra "Ver pedido" */
+
+/* ---------- Páginas informativas: sección y pie del mismo color marrón claro ---------- */
+:root { --kraft: #e7d8bf; --kraft-line: rgba(92, 64, 32, .25); }
+body.no-catbar { background: var(--kraft); }
+body.no-catbar .page { background: transparent; box-shadow: none; }
+body.no-catbar .info-list, body.no-catbar .info-list li, body.no-catbar .info details { border-color: var(--kraft-line); }
+body.no-catbar .steps li { background: rgba(255,255,255,.45); border-color: var(--kraft-line); }
+body.no-catbar .footer { background: var(--kraft); margin-top: 0; padding-top: 0; }
+body.no-catbar .footer__full { display: none; }
+body.no-catbar .footer .footer__thin { display: flex; border-top: 1px solid var(--kraft-line); }   /* mini línea de división */
+
 @media (max-width: 760px) {
-  .footer { margin-top: 28px; }
   .footer__row { flex-direction: column; justify-content: center; text-align: center; gap: 8px; padding-block: 16px; }
   .footer__links { justify-content: center; gap: 4px 14px; }
 }
-
-/* El pie siempre queda abajo de todo: en páginas cortas el contenido se estira, no el pie */
-body { display: flex; flex-direction: column; min-height: 100vh; }
-.main { flex: 1 0 auto; }
-.footer { flex: none; }

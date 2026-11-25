@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#C9D58B">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=logo2">
+  <link rel="stylesheet" href="css/styles.css?v=footer3">
 </head>
 <body>
   <div class="marquee" aria-label="Promoción de envío"><div class="marquee__track" id="marquee"></div></div>
@@ -54,7 +54,38 @@
   <main id="app" class="main" tabindex="-1"></main>
 
   <footer class="footer">
-    <div class="container footer__row">
+    <!-- Pie completo (catálogo, inicio, productos) -->
+    <div class="footer__full">
+      <div class="container footer__grid">
+        <div>
+          <a href="#/" class="logo logo--footer"><img class="logo__img" src="img/logo-96.png" srcset="img/logo-96.png 1x, img/logo-192.png 2x" width="30" height="30" alt=""><span class="logo__name">SINTER</span></a>
+          <p>Frutos secos, semillas, mixes y almacén natural. Fraccionamos en el día para que te llegue siempre fresco.</p>
+        </div>
+        <div>
+          <h4>Ayuda</h4>
+          <ul>
+            <li><a href="#/info/como-comprar">Cómo comprar</a></li>
+            <li><a href="#/info/envios">Envíos y retiro</a></li>
+            <li><a href="#/info/faq">Preguntas frecuentes</a></li>
+            <li><a href="#/info/nosotros">Nosotros</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contacto</h4>
+          <ul>
+            <li>Av. Ejemplo 1234</li>
+            <li>Lun a Sáb · 9 a 13 y 16 a 20 hs</li>
+            <li><a class="js-wa" target="_blank" rel="noopener">Escribinos por WhatsApp</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom container">
+        <span>© <span class="js-year"></span> Sinter Natural · Precios en pesos argentinos.</span>
+        <span>Efectivo · Transferencia · Mercado Pago</span>
+      </div>
+    </div>
+    <!-- Pie fino (solo páginas informativas) -->
+    <div class="container footer__row footer__thin">
       <a href="#/" class="footer__brand"><img src="img/logo-96.png" width="22" height="22" alt=""> Sinter Natural</a>
       <nav class="footer__links" aria-label="Ayuda">
         <a href="#/info/como-comprar">Cómo comprar</a>
@@ -62,9 +93,9 @@
         <a href="#/info/faq">Preguntas frecuentes</a>
         <a href="#/info/nosotros">Nosotros</a>
         <a href="#/info/contacto">Contacto</a>
-        <a id="footerWa" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="js-wa" target="_blank" rel="noopener">WhatsApp</a>
       </nav>
-      <span class="footer__copy">© <span id="year"></span> Sinter Natural</span>
+      <span class="footer__copy">© <span class="js-year"></span> Sinter Natural</span>
     </div>
   </footer>
 
@@ -95,7 +126,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="js/data.js?v=logo2"></script>
-  <script src="js/app.js?v=logo2"></script>
+  <script src="js/data.js?v=footer3"></script>
+  <script src="js/app.js?v=footer3"></script>
 </body>
 </html>
