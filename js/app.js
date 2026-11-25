@@ -171,13 +171,13 @@
 
   function renderCatbar(active) {
     const chips = [`<a class="chip ${active === "productos" ? "active" : ""}" href="#/productos">Todo</a>`]
-      .concat(CATEGORIES.map((c) => `<a class="chip ${active === c.id ? "active" : ""}" href="#/categoria/${c.id}">${c.emoji} ${esc(c.name)}</a>`))
-      .concat(`<a class="chip ${active === "ofertas" ? "active" : ""}" href="#/ofertas">🔥 Ofertas</a>`);
-    $("#catbar").innerHTML = `<span class="catbar__label">▦ Explorá por categoría</span>
+      .concat(CATEGORIES.map((c) => `<a class="chip ${active === c.id ? "active" : ""}" href="#/categoria/${c.id}">${esc(c.name)}</a>`))
+      .concat(`<a class="chip chip--offer ${active === "ofertas" ? "active" : ""}" href="#/ofertas">Ofertas</a>`);
+    $("#catbar").innerHTML = `<span class="catbar__label">Categorías</span>
       <div class="catbar__scroller">
-        <button class="catbar__arrow catbar__arrow--prev" data-dir="-1" aria-label="Ver categorías anteriores" hidden>‹</button>
+        <button class="catbar__arrow catbar__arrow--prev" data-dir="-1" aria-label="Ver categorías anteriores" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="catbar__chips">${chips.join("")}</div>
-        <button class="catbar__arrow catbar__arrow--next" data-dir="1" aria-label="Ver más categorías" hidden>›</button>
+        <button class="catbar__arrow catbar__arrow--next" data-dir="1" aria-label="Ver más categorías" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>`;
     const track = $(".catbar__chips", $("#catbar"));
     const prev = $(".catbar__arrow--prev", $("#catbar"));
