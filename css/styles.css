@@ -544,5 +544,20 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 
 /* Páginas informativas: sin barra de categorías, con botón "Volver al catálogo" */
 body.no-catbar .catbar { display: none; }
-.back-btn { margin-bottom: 18px; gap: 6px; }
-.back-btn--bottom { margin: 26px 0 0; }
+.back-btn { margin-bottom: 32px; gap: 6px; }
+
+/* Páginas informativas más aireadas */
+body.no-catbar .page { padding: 40px 48px 56px; }
+.info h1 { margin: 0 0 28px; line-height: 1.1; }
+.info p { margin: 0 0 18px; line-height: 1.7; max-width: 640px; }
+.info .steps { gap: 16px; margin: 0; }
+.info details { padding: 18px 0; }
+.info details p { margin: 12px 0 0; }
+.info-list { list-style: none; padding: 0; margin: 0 0 32px; display: grid; gap: 0; max-width: 560px; border-top: 1px solid var(--border); }
+.info-list li { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.info-list span { font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--green); padding-top: 3px; }
+@media (max-width: 640px) {
+  body.no-catbar .page { padding: 28px 20px 40px; }
+  .back-btn { margin-bottom: 24px; }
+  .info-list li { grid-template-columns: 1fr; gap: 4px; }
+}

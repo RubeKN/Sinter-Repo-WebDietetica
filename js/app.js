@@ -794,8 +794,12 @@
       <details><summary>¿Qué medios de pago aceptan?</summary><p>Efectivo, transferencia (con ${STORE.transferDiscount * 100}% OFF) y Mercado Pago.</p></details>
       <details><summary>¿Puedo modificar mi pedido?</summary><p>Sí, escribinos por WhatsApp antes de que salga a reparto.</p></details>`,
     contacto: () => `<h1>Contacto</h1>
-      <p>📍 Av. Ejemplo 1234<br>🕘 Lunes a sábado de 9 a 13 y de 16 a 20 hs</p>
-      <p><a class="btn btn--wa" href="${waLink("Hola! Quería hacer una consulta")}" target="_blank" rel="noopener">💬 Escribinos por WhatsApp</a></p>`
+      <ul class="info-list">
+        <li><span>Dirección</span>Av. Ejemplo 1234</li>
+        <li><span>Horarios</span>Lunes a sábado de 9 a 13 y de 16 a 20 hs</li>
+        <li><span>WhatsApp</span>Respondemos consultas y tomamos pedidos</li>
+      </ul>
+      <a class="btn btn--wa" href="${waLink("Hola! Quería hacer una consulta")}" target="_blank" rel="noopener">Escribinos por WhatsApp</a>`
   };
 
   function viewInfo(page) {
@@ -805,10 +809,9 @@
     app.innerHTML = `<div class="container"><div class="page">
       <a class="btn btn--ghost btn--sm back-btn" href="#/productos">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg>
-        Volver al catálogo
+        Seguir comprando
       </a>
       <div class="info">${fn()}</div>
-      <a class="btn btn--sm back-btn back-btn--bottom" href="#/productos">Volver al catálogo</a>
     </div></div>`;
   }
 
