@@ -525,14 +525,15 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 /* Barra por páginas: nunca hay categorías cortadas */
 .catbar__chips.is-measuring .chip { flex: 0 0 auto; }
 .chip.is-first::before { display: none; }
-.catbar__arrow--prev::after { display: none; }
-/* Degradé mínimo antes de la flecha "siguiente": sugiere que las categorías siguen por debajo.
-   Solo oscurece levemente el margen de la última categoría, sin taparle el texto. */
-.catbar__arrow--next { box-shadow: -6px 0 10px -6px rgba(44,58,26,.35); }
-.catbar__arrow--next::before {
-  display: block; content: ""; position: absolute; right: 100%; top: 0; bottom: 0; width: 26px; pointer-events: none;
-  background: linear-gradient(90deg, rgba(44,58,26,0), rgba(44,58,26,.09));
+/* Degradé muy leve junto a las flechas: sugiere que las categorías siguen por debajo.
+   Solo toca el margen del bloque vecino, sin taparle el texto. */
+.catbar__arrow--next { box-shadow: -5px 0 8px -6px rgba(44,58,26,.22); }
+.catbar__arrow--prev { box-shadow: 5px 0 8px -6px rgba(44,58,26,.22); z-index: 1; }
+.catbar__arrow--next::before, .catbar__arrow--prev::after {
+  display: block; content: ""; position: absolute; top: 0; bottom: 0; width: 22px; pointer-events: none;
 }
+.catbar__arrow--next::before { right: 100%; left: auto; background: linear-gradient(90deg, rgba(44,58,26,0), rgba(44,58,26,.05)); }
+.catbar__arrow--prev::after { left: 100%; right: auto; background: linear-gradient(270deg, rgba(44,58,26,0), rgba(44,58,26,.05)); }
 .catbar__chips.slide-next .chip { animation: chipsNext .35s cubic-bezier(.22,.61,.36,1); }
 .catbar__chips.slide-prev .chip { animation: chipsPrev .35s cubic-bezier(.22,.61,.36,1); }
 @keyframes chipsNext { from { opacity: 0; transform: translateX(28px); } }
