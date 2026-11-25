@@ -32,9 +32,20 @@ Todo en `js/data.js`:
 - `STORE`: número de WhatsApp, ciudad, monto de envío gratis, costo de envío, % de descuento por transferencia y fecha de fin de la promo.
 - `CATEGORIES`, `TAGS`, `PRODUCTS`: catálogo. Un producto con `oldPrice` aparece como oferta.
 
+## Fotos de productos
+
+Las fotos van en `img/productos/` (WebP, cuadradas, fondo blanco, 800×800 px como máximo) y se asignan
+en `js/data.js` con el campo `image` del producto, por ejemplo:
+
+```js
+{ id: 1, image: "img/productos/almendras-non-pareil.webp", name: "Almendras Non Pareil", ... }
+```
+
+Los productos sin `image` muestran el ícono de su categoría.
+
 ## Próximos pasos sugeridos
 
-- Reemplazar los íconos por fotos reales de producto (campo `image`)
+- Completar las fotos de los productos que todavía usan ícono
 - Cargar el catálogo desde un backend / planilla
 - Integrar Mercado Pago Checkout Pro
 

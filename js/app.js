@@ -19,11 +19,16 @@
   const isOffer = (p) => Boolean(p.oldPrice);
   const offers = () => PRODUCTS.filter(isOffer);
   const novedades = () => PRODUCTS.filter((p) => p.isNew);
+  // Foto del producto si la tiene; si no, el ícono.
+  const visual = (p, cls = "") => p.image
+    ? `<img class="${cls}" src="${p.image}" alt="${esc(p.name)}" loading="lazy" decoding="async">`
+    : p.emoji;
   const tint = (p) => {
+    if (p.image) return "background:#fff";
     const c = catById(p.cat)?.color || "#888";
     return `background: radial-gradient(circle at 50% 45%, ${c}33, ${c}14 60%, #f6efe2)`;
   };
-  const ph = (p, cls = "") => `<div class="ph ${cls}" style="${tint(p)}" aria-hidden="true">${p.emoji}</div>`;
+  const ph = (p, cls = "") => `<div class="ph ${cls} ${p.image ? "has-img" : ""}" style="${tint(p)}" aria-hidden="true">${visual(p)}</div>`;
 
   const store = {
     get(key, fallback) {
@@ -155,8 +160,8 @@
     const out = p.stock <= 0;
     const k = kicker ?? catById(p.cat)?.name ?? "";
     return `<article class="card">
-      <a href="#/producto/${p.id}" class="card__img ph" style="${tint(p)}" aria-label="${esc(p.name)}">
-        ${p.emoji}${p.isNew ? `<span class="badge-new">Nuevo</span>` : ""}${out ? `<span class="out">Sin stock</span>` : ""}
+      <a href="#/producto/${p.id}" class="card__img ph ${p.image ? "has-img" : ""}" style="${tint(p)}" aria-label="${esc(p.name)}">
+        ${visual(p)}${p.isNew ? `<span class="badge-new">Nuevo</span>` : ""}${out ? `<span class="out">Sin stock</span>` : ""}
       </a>
       <div class="card__body">
         <span class="card__kicker ${isOffer(p) ? "" : "card__kicker--tag"}">${esc(k)}</span>
@@ -423,7 +428,7 @@
             </div>
           </div>
           <a class="slide__visual" href="#/producto/${p.id}" tabindex="-1" aria-hidden="true">
-            <span class="slide__emoji">${p.emoji}</span>
+            ${p.image ? visual(p, "slide__photo") : `<span class="slide__emoji">${p.emoji}</span>`}
             <span class="slide__stamp">Nuevo</span>
           </a>
         </div>

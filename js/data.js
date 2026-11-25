@@ -1,5 +1,5 @@
 // Catálogo de ejemplo. Reemplazar por datos reales (o por una API) más adelante.
-// Precios en pesos argentinos. `variants` define presentaciones con multiplicador de precio.
+// Precios en pesos argentinos. `image` (opcional): foto del producto en img/productos/; si no hay, se muestra el ícono. `variants` define presentaciones con multiplicador de precio.
 
 window.STORE = {
   name: "Sinter Natural",
@@ -45,9 +45,9 @@ const W = [
 ];
 
 window.PRODUCTS = [
-  { id: 1, name: "Almendras Non Pareil", cat: "frutos-secos", price: 6200, oldPrice: 7100, emoji: "🌰", tags: ["sin-tacc", "vegano", "keto"], variants: W, featured: true, stock: 40,
+  { id: 1, image: "img/productos/almendras-non-pareil.webp", name: "Almendras Non Pareil", cat: "frutos-secos", price: 6200, oldPrice: 7100, emoji: "🌰", tags: ["sin-tacc", "vegano", "keto"], variants: W, featured: true, stock: 40,
     desc: "Almendras californianas enteras, crocantes y sin sal. Ideales para snack, leches vegetales o repostería." },
-  { id: 2, name: "Nueces Mariposa Extra Light", cat: "frutos-secos", price: 7400, emoji: "🥜", tags: ["sin-tacc", "vegano", "keto"], variants: W, featured: true, stock: 25,
+  { id: 2, image: "img/productos/nueces-mariposa.webp", name: "Nueces Mariposa Extra Light", cat: "frutos-secos", price: 7400, emoji: "🥜", tags: ["sin-tacc", "vegano", "keto"], variants: W, featured: true, stock: 25,
     desc: "Mariposas de nuez de color claro, seleccionadas. Fuente de omega 3." },
   { id: 3, name: "Mix Energético", cat: "mixes", price: 5300, oldPrice: 5900, emoji: "🥨", tags: ["vegano"], variants: W, stock: 60,
     desc: "Maní, almendras, pasas de uva, nueces y banana chips. El clásico para llevar a todos lados." },
@@ -62,7 +62,7 @@ window.PRODUCTS = [
     desc: "Ciruelas tiernas descarozadas, ideales para snack o compotas." },
   { id: 37, name: "Banana Chips", cat: "frutas-deshidratadas", price: 2600, oldPrice: 2950, emoji: "🍌", tags: ["vegano"], variants: W, stock: 50,
     desc: "Rodajas de banana crocantes, apenas endulzadas." },
-  { id: 38, isNew: true, name: "Arándanos Deshidratados", cat: "frutas-deshidratadas", price: 5900, emoji: "🫐", tags: ["sin-tacc", "vegano"], variants: W, stock: 22,
+  { id: 38, image: "img/productos/arandanos-deshidratados.webp", isNew: true, name: "Arándanos Deshidratados", cat: "frutas-deshidratadas", price: 5900, emoji: "🫐", tags: ["sin-tacc", "vegano"], variants: W, stock: 22,
     desc: "Arándanos rojos tiernos, perfectos para granolas y ensaladas." },
   { id: 6, name: "Semillas de Chía", cat: "semillas", price: 2600, oldPrice: 3100, emoji: "⚫", tags: ["sin-tacc", "vegano", "organico", "keto"], variants: W, featured: true, stock: 100,
     desc: "Chía negra seleccionada. Rica en fibra y omega 3. Ideal para puddings y panificados." },
@@ -70,7 +70,7 @@ window.PRODUCTS = [
     desc: "Lino dorado limpio. Molelo antes de consumir para aprovechar sus nutrientes." },
   { id: 8, name: "Mix de Semillas", cat: "semillas", price: 2800, emoji: "🌻", tags: ["sin-tacc", "vegano"], variants: W, stock: 55,
     desc: "Girasol, zapallo, sésamo, lino y chía. Para ensaladas, yogures y panes." },
-  { id: 9, isNew: true, name: "Semillas de Zapallo Peladas", cat: "semillas", price: 4900, emoji: "🎃", tags: ["sin-tacc", "vegano", "keto"], variants: W, stock: 30,
+  { id: 9, image: "img/productos/semillas-zapallo.webp", isNew: true, name: "Semillas de Zapallo Peladas", cat: "semillas", price: 4900, emoji: "🎃", tags: ["sin-tacc", "vegano", "keto"], variants: W, stock: 30,
     desc: "Pepitas verdes peladas, crocantes y nutritivas." },
 
   { id: 10, name: "Granola Crocante de Miel", cat: "mixes", price: 3900, emoji: "🥣", tags: [], variants: W, featured: true, stock: 45,
@@ -95,12 +95,12 @@ window.PRODUCTS = [
     desc: "Lentejas rojas peladas, cocción rápida. Ideales para dhal y hamburguesas." },
   { id: 19, name: "Garbanzos", cat: "legumbres", price: 1700, emoji: "🫘", tags: ["sin-tacc", "vegano"], variants: W, stock: 90,
     desc: "Garbanzos calibre 9. Para hummus, guisos y ensaladas." },
-  { id: 20, isNew: true, name: "Porotos Aduki", cat: "legumbres", price: 2600, emoji: "🫘", tags: ["sin-tacc", "vegano", "organico"], variants: W, stock: 28,
+  { id: 20, image: "img/productos/porotos-aduki.webp", isNew: true, name: "Porotos Aduki", cat: "legumbres", price: 2600, emoji: "🫘", tags: ["sin-tacc", "vegano", "organico"], variants: W, stock: 28,
     desc: "Porotos japoneses de cocción rápida y sabor suave." },
 
   { id: 21, name: "Proteína Vegetal de Arveja", cat: "suplementos", price: 21500, oldPrice: 24900, emoji: "🥤", tags: ["vegano", "sin-tacc"], variants: [{ label: "500 g", mult: 1 }, { label: "1 kg", mult: 1.85 }], featured: true, stock: 12,
     desc: "Aislado de arveja sabor vainilla. 22 g de proteína por porción." },
-  { id: 22, isNew: true, name: "Colágeno Hidrolizado", cat: "suplementos", price: 16800, emoji: "💊", tags: ["sin-tacc", "sin-azucar"], variants: [{ label: "300 g", mult: 1 }], stock: 15,
+  { id: 22, image: "img/productos/colageno-hidrolizado.webp", isNew: true, name: "Colágeno Hidrolizado", cat: "suplementos", price: 16800, emoji: "💊", tags: ["sin-tacc", "sin-azucar"], variants: [{ label: "300 g", mult: 1 }], stock: 15,
     desc: "Colágeno bovino hidrolizado con vitamina C. Sin sabor." },
   { id: 23, name: "Magnesio Citrato", cat: "suplementos", price: 9900, emoji: "💊", tags: ["vegano", "sin-tacc"], variants: [{ label: "60 cápsulas", mult: 1 }, { label: "120 cápsulas", mult: 1.8 }], stock: 40,
     desc: "Citrato de magnesio de alta absorción." },
@@ -109,7 +109,7 @@ window.PRODUCTS = [
 
   { id: 25, name: "Yerba Mate Orgánica", cat: "infusiones", price: 4200, emoji: "🧉", tags: ["organico", "sin-tacc", "vegano"], variants: [{ label: "500 g", mult: 1 }, { label: "1 kg", mult: 1.9 }], featured: true, stock: 50,
     desc: "Yerba con palo, estacionamiento natural, cultivo orgánico certificado." },
-  { id: 26, isNew: true, name: "Té Verde Sencha", cat: "infusiones", price: 3600, emoji: "🍵", tags: ["organico", "vegano"], variants: [{ label: "100 g", mult: 1 }], stock: 35,
+  { id: 26, image: "img/productos/te-verde-sencha.webp", isNew: true, name: "Té Verde Sencha", cat: "infusiones", price: 3600, emoji: "🍵", tags: ["organico", "vegano"], variants: [{ label: "100 g", mult: 1 }], stock: 35,
     desc: "Hebras de té verde japonés estilo sencha." },
   { id: 27, name: "Cúrcuma con Jengibre (blend)", cat: "infusiones", price: 3100, oldPrice: 3500, emoji: "🫚", tags: ["vegano", "sin-tacc"], variants: [{ label: "100 g", mult: 1 }], stock: 25,
     desc: "Blend para golden milk: cúrcuma, jengibre, canela y pimienta." },
