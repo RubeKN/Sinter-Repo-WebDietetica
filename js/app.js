@@ -836,6 +836,7 @@
       <h5>Categorías</h5>${CATEGORIES.map((c) => `<a href="#/categoria/${c.id}">${c.emoji} ${esc(c.name)}</a>`).join("")}
       <h5>Ayuda</h5><a href="#/info/envios">Envíos y retiro</a><a href="#/info/faq">Preguntas frecuentes</a>`;
     $("#footerWa").href = waLink("Hola! Quería hacer una consulta");
+    $("#waFloat").href = waLink("Hola! Quería hacer una consulta");
     $("#year").textContent = new Date().getFullYear();
 
     $("#cartBtn").addEventListener("click", () => openDrawer("#cartDrawer"));
