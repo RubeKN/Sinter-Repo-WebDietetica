@@ -37,3 +37,19 @@ Todo en `js/data.js`:
 - Reemplazar los íconos por fotos reales de producto (campo `image`)
 - Cargar el catálogo desde un backend / planilla
 - Integrar Mercado Pago Checkout Pro
+
+## Deploy en Vercel
+
+El sitio es estático: Vercel lo sirve tal cual, sin build. `vercel.json` agrega headers de seguridad y caché.
+
+**Desde el panel (recomendado):**
+1. Entrá a https://vercel.com/new e importá el repo `Sinter-Repo-WebDietetica` desde GitHub.
+2. Framework Preset: **Other**. Build Command y Output Directory: dejalos vacíos. Root Directory: `./`.
+3. **Deploy**. Cada push a la rama de producción vuelve a desplegar automáticamente; las otras ramas generan URLs de preview.
+
+**Desde la terminal:**
+```bash
+npm i -g vercel
+vercel        # primer deploy (preview), te pide loguearte y vincular el proyecto
+vercel --prod # deploy a producción
+```
