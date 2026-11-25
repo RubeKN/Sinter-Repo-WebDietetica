@@ -454,9 +454,6 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
   .countdown--inline { width: 100%; justify-content: space-between; }
   .catbar__inner { height: auto; flex-wrap: wrap; }
   .catbar__main { flex: 1 0 100%; height: 46px; padding-left: 0; }
-  .search--bar { order: 2; flex-basis: auto; width: 0; height: 0; margin: 0 16px; border-width: 0; }
-  .header.is-scrolled .search--bar { border-width: 1px; }
-  .header.is-scrolled .search--bar { width: calc(100% - 32px); height: 40px; margin: 0 16px 8px; }
   .chip { padding: 0 16px; font-size: .84rem; }
   .catbar__arrow { width: 44px; }
   .benefits { grid-template-columns: 1fr 1fr; margin: 16px 0 0; }
@@ -482,9 +479,15 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 }
 .menu-list .menu-offer { color: var(--red); }
 
-/* Celular: al bajar el buscador queda arriba (no se mueve a la barra de categorías) */
+/* Celular: buscador fino, siempre debajo de la barra de categorías */
 @media (max-width: 640px) {
-  .header.is-scrolled .header__row { visibility: visible; }
-  .header.is-scrolled .header__row > :not(.search) { visibility: hidden; transition: visibility 0s .4s; }
-  .search--bar, .header.is-scrolled .search--bar { display: none !important; }
+  #searchForm { display: none; }
+  .catbar { background: #fff; }
+  .catbar__main { background: var(--pistachio); }
+  .search--bar, .header.is-scrolled .search--bar {
+    order: 2; flex: 0 0 auto; width: calc(100% - 24px); height: 34px; margin: 6px 12px; padding: 0 10px;
+    opacity: 1; visibility: visible; overflow: visible; background: var(--pistachio-soft); border: 1px solid var(--border); transition: none;
+  }
+  .search--bar svg { width: 14px; height: 14px; }
+  .search--bar input { font-size: .85rem; }
 }

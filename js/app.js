@@ -216,14 +216,17 @@
   // Al bajar se oculta la fila superior del header; al volver arriba reaparece.
   const HIDE_AT = 90, SHOW_AT = 30; // histéresis para que no "tiemble"
   const headerRow = $(".header__row", header);
-  // En celular el buscador queda arriba al bajar: solo se oculta la línea del logo/carrito/menú.
+  // En celular el buscador vive siempre debajo de la barra de categorías (el del header se oculta).
   const isMobile = window.matchMedia("(max-width: 640px)");
   const setRowHeight = () => {
-    const shift = isMobile.matches
-      ? $("#searchForm").offsetTop - 8          // hasta justo arriba del buscador
-      : headerRow.offsetHeight;                  // toda la fila
-    header.style.setProperty("--row-h", shift + "px");
+    header.style.setProperty("--row-h", headerRow.offsetHeight + "px");
+    syncBarSearch();
   };
+  function syncBarSearch() {
+    const on = isMobile.matches || header.classList.contains("is-scrolled");
+    $("#barSearchForm").setAttribute("aria-hidden", String(!on));
+    $("#barSearchForm input").tabIndex = on ? 0 : -1;
+  }
   function onScrollHeader() {
     const y = window.scrollY;
     const was = header.classList.contains("is-scrolled");
@@ -233,8 +236,7 @@
     // Si estabas escribiendo en un buscador, el foco pasa al que queda visible.
     const from = now ? $("#searchInput") : $("#barSearchForm input");
     const to = now ? $("#barSearchForm input") : $("#searchInput");
-    $("#barSearchForm").setAttribute("aria-hidden", String(!now));
-    $("#barSearchForm input").tabIndex = now ? 0 : -1;
+    syncBarSearch();
     if (!isMobile.matches && document.activeElement === from) { to.value = from.value; to.focus({ preventScroll: true }); }
     $$(".search__suggest").forEach((box) => { box.hidden = true; });
   }
