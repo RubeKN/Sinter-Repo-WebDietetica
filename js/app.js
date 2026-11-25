@@ -97,6 +97,7 @@
     const bar = $("#orderbar");
     const onCheckout = location.hash.startsWith("#/checkout");
     bar.hidden = count === 0 || onCheckout;
+    document.body.classList.toggle("has-orderbar", !bar.hidden);
     $("#orderbarCount").textContent = `${count} ${count === 1 ? "ARTÍCULO" : "ARTÍCULOS"}`;
     $("#orderbarTotal").textContent = money(sub);
 
