@@ -18,6 +18,7 @@
   const offPct = (p) => (p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0);
   const isOffer = (p) => Boolean(p.oldPrice);
   const offers = () => PRODUCTS.filter(isOffer);
+  const novedades = () => PRODUCTS.filter((p) => p.isNew);
   const tint = (p) => {
     const c = catById(p.cat)?.color || "#888";
     return `background: radial-gradient(circle at 50% 45%, ${c}33, ${c}14 60%, #f6efe2)`;
@@ -154,7 +155,7 @@
     const k = kicker ?? catById(p.cat)?.name ?? "";
     return `<article class="card">
       <a href="#/producto/${p.id}" class="card__img ph" style="${tint(p)}" aria-label="${esc(p.name)}">
-        ${p.emoji}${out ? `<span class="out">Sin stock</span>` : ""}
+        ${p.emoji}${p.isNew ? `<span class="badge-new">Nuevo</span>` : ""}${out ? `<span class="out">Sin stock</span>` : ""}
       </a>
       <div class="card__body">
         <span class="card__kicker ${isOffer(p) ? "" : "card__kicker--tag"}">${esc(k)}</span>
@@ -254,7 +255,7 @@
 
     const chip = (k, href, label, extra = "") =>
       `<a class="chip ${extra} ${active === k ? "active" : ""}" data-key="${k}" href="${href}">${label}</a>`;
-    const chips = [chip("productos", "#/productos", "Todo")]
+    const chips = [chip("productos", "#/productos", "Todo"), chip("novedades", "#/novedades", "Novedades", "chip--new")]
       .concat(CATEGORIES.map((c) => chip(c.id, `#/categoria/${c.id}`, esc(c.name))))
       .concat(chip("ofertas", "#/ofertas", "Ofertas", "chip--offer"));
     $("#catbar").innerHTML = `      <div class="catbar__scroller">
@@ -299,56 +300,128 @@
   }
 
   /* ---------------- Vistas ---------------- */
+  /* ---------------- Carrusel de novedades ---------------- */
+  let carouselTimer = null;
+  function stopCarousel() { clearInterval(carouselTimer); carouselTimer = null; }
+
+  function carouselHTML(items) {
+    const slides = items.map((p, i) => {
+      const cat = catById(p.cat);
+      return `<article class="slide ${i % 2 ? "slide--alt" : ""}" data-i="${i}" aria-roledescription="slide" aria-label="${i + 1} de ${items.length}">
+        <div class="container slide__inner">
+          <div class="slide__text">
+            <span class="slide__kicker">Nuevo ingreso · ${esc(cat.name)}</span>
+            <h2 class="slide__title">${esc(p.name)}</h2>
+            <p class="slide__desc">${esc(p.desc)}</p>
+            <div class="slide__price">
+              ${p.oldPrice ? `<span class="old">${money(p.oldPrice)}</span>` : ""}
+              <b class="${p.oldPrice ? "now" : ""}">${money(p.price)}</b>
+              <small>${esc(p.variants[0].label)}</small>
+            </div>
+            <div class="slide__ctas">
+              <a class="btn" href="#/producto/${p.id}">Ver producto</a>
+              <a class="btn btn--ghost" href="#/novedades">Todas las novedades</a>
+            </div>
+          </div>
+          <a class="slide__visual" href="#/producto/${p.id}" tabindex="-1" aria-hidden="true">
+            <span class="slide__emoji">${p.emoji}</span>
+            <span class="slide__stamp">Nuevo</span>
+          </a>
+        </div>
+      </article>`;
+    }).join("");
+    return `<section class="carousel" aria-roledescription="carousel" aria-label="Novedades y nuevos ingresos">
+      <div class="carousel__track" id="carTrack">${slides}</div>
+      <button class="carousel__arrow carousel__arrow--prev" data-car="-1" aria-label="Novedad anterior"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="carousel__arrow carousel__arrow--next" data-car="1" aria-label="Novedad siguiente"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M9 5l7 7-7 7"/></svg></button>
+      <div class="carousel__dots">${items.map((_, i) => `<button data-dot="${i}" aria-label="Ir a la novedad ${i + 1}"><span></span></button>`).join("")}</div>
+    </section>`;
+  }
+
+  function initCarousel(count) {
+    const root = $(".carousel");
+    if (!root || count < 2) return;
+    const track = $("#carTrack");
+    const slides = $$(".slide", track);
+    const dots = $$("[data-dot]", root);
+    const DELAY = 5500;
+    let idx = 0;
+    const go = (n) => {
+      idx = (n + count) % count;
+      track.style.transform = `translateX(-${idx * 100}%)`;
+      slides.forEach((sl, i) => { sl.classList.toggle("is-active", i === idx); sl.setAttribute("aria-hidden", String(i !== idx)); });
+      dots.forEach((d, i) => d.classList.toggle("active", i === idx));
+      // reinicia la barra de progreso del punto activo
+      root.style.setProperty("--car-delay", DELAY + "ms");
+      dots.forEach((d) => { const bar = $("span", d); bar.style.animation = "none"; void bar.offsetWidth; bar.style.animation = ""; });
+    };
+    const play = () => { stopCarousel(); if (!reduceMotion) carouselTimer = setInterval(() => go(idx + 1), DELAY); root.classList.remove("paused"); };
+    const pause = () => { stopCarousel(); root.classList.add("paused"); };
+    $$("[data-car]", root).forEach((b) => b.addEventListener("click", () => { go(idx + Number(b.dataset.car)); play(); }));
+    dots.forEach((d) => d.addEventListener("click", () => { go(Number(d.dataset.dot)); play(); }));
+    root.addEventListener("mouseenter", pause);
+    root.addEventListener("mouseleave", play);
+    root.addEventListener("focusin", pause);
+    root.addEventListener("focusout", play);
+    // Deslizar con el dedo
+    let x0 = null;
+    root.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; pause(); }, { passive: true });
+    root.addEventListener("touchend", (e) => {
+      if (x0 !== null) { const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1)); }
+      x0 = null; play();
+    });
+    go(0);
+    play();
+  }
+
   function viewHome() {
     renderCatbar(null);
     const off = offers();
+    const nuevos = novedades();
     const endDate = new Date(STORE.promoEndsAt);
-    const featured = PRODUCTS.filter((p) => p.featured && !isOffer(p));
+    // Más vendidos: destacados sin oferta; se completa hasta 8 con otros productos con stock.
+    const destacados = PRODUCTS.filter((p) => p.featured && !isOffer(p));
+    const relleno = PRODUCTS.filter((p) => !p.featured && !isOffer(p) && !p.isNew && p.stock > 0);
+    const masVendidos = destacados.concat(relleno).slice(0, 8);
     app.innerHTML = `
-    <section class="hero">
-      <div class="container hero__inner">
-        <span class="hero__art">🥜</span>
-        <div class="hero__text">
-          <span class="pill">Selección especial · ${off.length} productos</span>
-          <h1>Ofertas <em>de la semana</em></h1>
-          <p>Precios especiales en frutos secos, mixes y más. Aprovechalos antes de que termine la promo.</p>
-          <a class="btn btn--gold" href="#/ofertas">Ver ofertas →</a>
-        </div>
-        <div class="countdown">
-          <div class="countdown__title">⏱ La promoción termina en</div>
-          <div class="countdown__nums" id="countdown"></div>
-          <div class="countdown__foot">Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a las 23:59 (hora argentina)</div>
-        </div>
-      </div>
-    </section>
+    ${carouselHTML(nuevos)}
     <div class="container">
-      <div class="hero-card">
-        <div class="benefits">
-          <div class="benefit"><span>🌿</span>Productos naturales</div>
-          <div class="benefit"><span>📦</span>Fraccionado en el día</div>
-          <div class="benefit"><span>🏷️</span>Precios justos</div>
-          <div class="benefit"><span>🚚</span>Envíos a domicilio</div>
-        </div>
-
-        <section class="section">
-          <div class="section__head"><h2>Ofertas destacadas</h2><a href="#/ofertas">Ver todas las ofertas →</a></div>
-          <div class="grid">${off.slice(0, 8).map((p, i) => productCard(p, `Oferta ${i + 1} de ${off.length}`)).join("")}</div>
-        </section>
-
-        <section class="section">
-          <div class="section__head"><h2>Comprá por categoría</h2><a href="#/productos">Ver todo →</a></div>
-          <div class="cat-grid">${CATEGORIES.map((c) => `
-            <a class="cat-tile" href="#/categoria/${c.id}">
-              <div class="ph" style="background:${c.color}22">${c.emoji}</div>${esc(c.name)}
-            </a>`).join("")}</div>
-        </section>
-
-        <section class="section" style="padding-bottom:28px">
-          <div class="section__head"><h2>Los más pedidos</h2><a href="#/productos">Ver catálogo →</a></div>
-          <div class="grid">${featured.slice(0, 8).map((p) => productCard(p)).join("")}</div>
-        </section>
+      <div class="benefits">
+        <div class="benefit"><span>🌿</span>Productos naturales</div>
+        <div class="benefit"><span>📦</span>Fraccionado en el día</div>
+        <div class="benefit"><span>🏷️</span>Precios justos</div>
+        <div class="benefit"><span>🚚</span>Envíos a domicilio</div>
       </div>
+
+      <section class="section">
+        <div class="section__head">
+          <div><span class="eyebrow">Los favoritos de nuestros clientes</span><h2>Más vendidos</h2></div>
+          <a href="#/productos">Ver catálogo →</a>
+        </div>
+        <div class="grid">${masVendidos.slice(0, 8).map((p) => productCard(p)).join("")}</div>
+      </section>
+
+      <section class="section section--offers">
+        <div class="section__head">
+          <div><span class="eyebrow eyebrow--red">Selección especial · ${off.length} productos</span><h2>Ofertas de la semana</h2></div>
+          <div class="countdown countdown--inline" title="Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a las 23:59 (hora argentina)">
+            <span class="countdown__title">Termina en</span>
+            <div class="countdown__nums" id="countdown"></div>
+          </div>
+        </div>
+        <div class="grid">${off.slice(0, 8).map((p, i) => productCard(p, `Oferta ${i + 1} de ${off.length}`)).join("")}</div>
+        <div class="section__more"><a class="btn btn--ghost" href="#/ofertas">Ver todas las ofertas →</a></div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div><span class="eyebrow">Explorá</span><h2>Comprá por categoría</h2></div><a href="#/productos">Ver todo →</a></div>
+        <div class="cat-grid">${CATEGORIES.map((c) => `
+          <a class="cat-tile" href="#/categoria/${c.id}">
+            <div class="ph" style="background:${c.color}22">${c.emoji}</div>${esc(c.name)}
+          </a>`).join("")}</div>
+      </section>
     </div>`;
+    initCarousel(nuevos.length);
     startCountdown();
   }
 
@@ -653,8 +726,10 @@
     closeDrawers();
     $$(".search__suggest").forEach((box) => { box.hidden = true; });
 
+    stopCarousel();
     if (!a) viewHome();
     else if (a === "productos") viewCatalog({ title: "Todos los productos", crumb: "Productos", list: PRODUCTS, active: "productos", query });
+    else if (a === "novedades") viewCatalog({ title: "Novedades y nuevos ingresos", crumb: "Novedades", list: novedades(), active: "novedades", query });
     else if (a === "ofertas") viewCatalog({ title: "Ofertas de la semana", crumb: "Ofertas", list: offers(), active: "ofertas", query: { sort: "descuento", ...query } });
     else if (a === "categoria" && catById(b)) {
       const c = catById(b);
