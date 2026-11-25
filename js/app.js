@@ -173,9 +173,30 @@
     const chips = [`<a class="chip ${active === "productos" ? "active" : ""}" href="#/productos">Todo</a>`]
       .concat(CATEGORIES.map((c) => `<a class="chip ${active === c.id ? "active" : ""}" href="#/categoria/${c.id}">${c.emoji} ${esc(c.name)}</a>`))
       .concat(`<a class="chip ${active === "ofertas" ? "active" : ""}" href="#/ofertas">🔥 Ofertas</a>`);
-    $("#catbar").innerHTML = `<span class="catbar__label">▦ Explorá por categoría</span><div class="catbar__chips">${chips.join("")}</div>`;
-    const act = $(".chip.active", $("#catbar"));
+    $("#catbar").innerHTML = `<span class="catbar__label">▦ Explorá por categoría</span>
+      <div class="catbar__scroller">
+        <button class="catbar__arrow catbar__arrow--prev" data-dir="-1" aria-label="Ver categorías anteriores" hidden>‹</button>
+        <div class="catbar__chips">${chips.join("")}</div>
+        <button class="catbar__arrow catbar__arrow--next" data-dir="1" aria-label="Ver más categorías" hidden>›</button>
+      </div>`;
+    const track = $(".catbar__chips", $("#catbar"));
+    const prev = $(".catbar__arrow--prev", $("#catbar"));
+    const next = $(".catbar__arrow--next", $("#catbar"));
+    const update = () => {
+      const max = track.scrollWidth - track.clientWidth;
+      prev.hidden = track.scrollLeft <= 4;
+      next.hidden = track.scrollLeft >= max - 4;
+    };
+    [prev, next].forEach((b) => b.addEventListener("click", () => {
+      track.scrollBy({ left: Number(b.dataset.dir) * track.clientWidth * 0.7, behavior: "smooth" });
+    }));
+    track.addEventListener("scroll", update, { passive: true });
+    window.removeEventListener("resize", renderCatbar.onResize || (() => {}));
+    renderCatbar.onResize = update;
+    window.addEventListener("resize", update);
+    const act = $(".chip.active", track);
     if (act) act.scrollIntoView({ block: "nearest", inline: "center" });
+    requestAnimationFrame(update);
   }
 
   /* ---------------- Countdown ---------------- */
@@ -205,22 +226,24 @@
     const endDate = new Date(STORE.promoEndsAt);
     const featured = PRODUCTS.filter((p) => p.featured && !isOffer(p));
     app.innerHTML = `
+    <section class="hero">
+      <div class="container hero__inner">
+        <span class="hero__art">🥜</span>
+        <div class="hero__text">
+          <span class="pill">Selección especial · ${off.length} productos</span>
+          <h1>Ofertas <em>de la semana</em></h1>
+          <p>Precios especiales en frutos secos, mixes y más. Aprovechalos antes de que termine la promo.</p>
+          <a class="btn btn--gold" href="#/ofertas">Ver ofertas →</a>
+        </div>
+        <div class="countdown">
+          <div class="countdown__title">⏱ La promoción termina en</div>
+          <div class="countdown__nums" id="countdown"></div>
+          <div class="countdown__foot">Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a las 23:59 (hora argentina)</div>
+        </div>
+      </div>
+    </section>
     <div class="container">
       <div class="hero-card">
-        <section class="hero">
-          <span class="hero__art">🥜</span>
-          <div class="hero__text">
-            <span class="pill">Selección especial · ${off.length} productos</span>
-            <h1>Ofertas <em>de la semana</em></h1>
-            <p>Precios especiales en frutos secos, mixes y más. Aprovechalos antes de que termine la promo.</p>
-            <a class="btn btn--gold" href="#/ofertas">Ver ofertas →</a>
-          </div>
-          <div class="countdown">
-            <div class="countdown__title">⏱ La promoción termina en</div>
-            <div class="countdown__nums" id="countdown"></div>
-            <div class="countdown__foot">Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a las 23:59 (hora argentina)</div>
-          </div>
-        </section>
         <div class="benefits">
           <div class="benefit"><span>🌿</span>Productos naturales</div>
           <div class="benefit"><span>📦</span>Fraccionado en el día</div>
