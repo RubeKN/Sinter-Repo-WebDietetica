@@ -40,7 +40,15 @@
       </button>
     </div>
     <nav class="catbar" aria-label="Categorías">
-      <div class="container catbar__inner" id="catbar"></div>
+      <div class="catbar__inner">
+        <div class="catbar__main" id="catbar"></div>
+        <!-- Buscador de la barra: solo visible al bajar, cuando se oculta el header -->
+        <form class="search search--bar" id="barSearchForm" role="search" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" placeholder="Buscar un producto..." autocomplete="off" aria-label="Buscar productos" tabindex="-1">
+          <ul class="search__suggest" hidden></ul>
+        </form>
+      </div>
     </nav>
   </header>
 

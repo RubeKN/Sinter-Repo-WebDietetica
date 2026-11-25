@@ -212,27 +212,33 @@
   // Si la persona usa la rueda o el dedo, se corta la animación.
   ["wheel", "touchstart", "keydown"].forEach((ev) => window.addEventListener(ev, () => cancelAnimationFrame(scrollAnim), { passive: true }));
 
-  // Header compacto al bajar
-  const COMPACT_AT = 60;
-  const onScrollHeader = () => header.classList.toggle("is-compact", window.scrollY > COMPACT_AT);
-  window.addEventListener("scroll", onScrollHeader, { passive: true });
-
-  // Alto del header en modo compacto (para saber dónde dejar el contenido).
-  function compactHeaderHeight() {
-    const was = header.classList.contains("is-compact");
-    header.classList.add("no-anim", "is-compact");
-    const h = header.offsetHeight;
-    header.classList.toggle("is-compact", was);
-    void header.offsetHeight;
-    header.classList.remove("no-anim");
-    return h;
+  // Al bajar se oculta la fila superior del header; al volver arriba reaparece.
+  const HIDE_AT = 90, SHOW_AT = 30; // histéresis para que no "tiemble"
+  const headerRow = $(".header__row", header);
+  const setRowHeight = () => header.style.setProperty("--row-h", headerRow.offsetHeight + "px");
+  function onScrollHeader() {
+    const y = window.scrollY;
+    const was = header.classList.contains("is-scrolled");
+    const now = was ? y > SHOW_AT : y > HIDE_AT;
+    if (now === was) return;
+    header.classList.toggle("is-scrolled", now);
+    // Si estabas escribiendo en un buscador, el foco pasa al que queda visible.
+    const from = now ? $("#searchInput") : $("#barSearchForm input");
+    const to = now ? $("#barSearchForm input") : $("#searchInput");
+    $("#barSearchForm").setAttribute("aria-hidden", String(!now));
+    $("#barSearchForm input").tabIndex = now ? 0 : -1;
+    if (document.activeElement === from) { to.value = from.value; to.focus({ preventScroll: true }); }
+    $$(".search__suggest").forEach((box) => { box.hidden = true; });
   }
+  window.addEventListener("scroll", onScrollHeader, { passive: true });
+  window.addEventListener("resize", setRowHeight);
+  setRowHeight();
 
   // Lleva la vista al inicio del contenido (título de la categoría), justo debajo del header fijo.
   function scrollToContent() {
-    const y = app.getBoundingClientRect().top + window.scrollY - compactHeaderHeight() + 8;
-    // Siempre por encima del umbral, así el header queda compacto y el cálculo coincide.
-    smoothScrollTo(Math.max(y, COMPACT_AT + 2));
+    // Al llegar, el header ya está oculto: solo queda visible la barra de categorías.
+    const y = app.getBoundingClientRect().top + window.scrollY - $(".catbar").offsetHeight + 8;
+    smoothScrollTo(Math.max(y, HIDE_AT + 2));
   }
 
   function renderCatbar(active) {
@@ -251,8 +257,7 @@
     const chips = [chip("productos", "#/productos", "Todo")]
       .concat(CATEGORIES.map((c) => chip(c.id, `#/categoria/${c.id}`, esc(c.name))))
       .concat(chip("ofertas", "#/ofertas", "Ofertas", "chip--offer"));
-    $("#catbar").innerHTML = `<span class="catbar__label">Categorías</span>
-      <div class="catbar__scroller">
+    $("#catbar").innerHTML = `      <div class="catbar__scroller">
         <button class="catbar__arrow catbar__arrow--prev" data-dir="-1" aria-label="Ver categorías anteriores" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="catbar__chips">${chips.join("")}</div>
         <button class="catbar__arrow catbar__arrow--next" data-dir="1" aria-label="Ver más categorías" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -646,7 +651,7 @@
     const { parts, query } = parseHash();
     const [a, b] = parts;
     closeDrawers();
-    $("#searchSuggest").hidden = true;
+    $$(".search__suggest").forEach((box) => { box.hidden = true; });
 
     if (!a) viewHome();
     else if (a === "productos") viewCatalog({ title: "Todos los productos", crumb: "Productos", list: PRODUCTS, active: "productos", query });
@@ -656,7 +661,7 @@
       viewCatalog({ title: `${c.emoji} ${esc(c.name)}`, crumb: esc(c.name), list: PRODUCTS.filter((p) => p.cat === c.id || (c.id === "sin-tacc" && p.tags.includes("sin-tacc"))), active: c.id, query });
     } else if (a === "buscar") {
       const q = (query.q || "").trim();
-      $("#searchInput").value = q;
+      $$(".search input").forEach((i) => { i.value = q; });
       viewCatalog({ title: `Resultados para “${esc(q)}”`, crumb: "Búsqueda", list: search(q), active: null, query });
     } else if (a === "producto") viewProduct(b);
     else if (a === "checkout") viewCheckout();
@@ -677,6 +682,7 @@
   }
 
   /* ---------------- Búsqueda ---------------- */
+  // (ver initSearch: hay dos buscadores, el del header y el de la barra de categorías)
   function search(q) {
     const terms = norm(q).split(/\s+/).filter(Boolean);
     if (!terms.length) return PRODUCTS;
@@ -686,9 +692,9 @@
     });
   }
 
-  function initSearch() {
-    const input = $("#searchInput");
-    const box = $("#searchSuggest");
+  function initSearch(form) {
+    const input = $("input", form);
+    const box = $(".search__suggest", form);
     let hl = -1;
     const show = () => {
       const q = input.value.trim();
@@ -700,7 +706,11 @@
         : `<li style="padding:10px;color:var(--muted)">Sin resultados para “${esc(q)}”</li>`;
       box.hidden = false;
     };
-    input.addEventListener("input", show);
+    input.addEventListener("input", () => {
+      // Mantiene ambos buscadores con el mismo texto.
+      $$(".search input").forEach((other) => { if (other !== input) other.value = input.value; });
+      show();
+    });
     input.addEventListener("focus", show);
     input.addEventListener("keydown", (e) => {
       const links = $$("a", box);
@@ -714,8 +724,8 @@
         location.hash = links[hl].getAttribute("href");
       } else if (e.key === "Escape") box.hidden = true;
     });
-    document.addEventListener("click", (e) => { if (!e.target.closest(".search")) box.hidden = true; });
-    $("#searchForm").addEventListener("submit", (e) => {
+    document.addEventListener("click", (e) => { if (!form.contains(e.target)) box.hidden = true; });
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
       const q = input.value.trim();
       box.hidden = true;
@@ -768,7 +778,8 @@
       if (e.key === "sinter_cart") { cart.items = store.get("sinter_cart", []); renderCartUI(); }
     });
 
-    initSearch();
+    initSearch($("#searchForm"));
+    initSearch($("#barSearchForm"));
     window.addEventListener("hashchange", route);
     route();
   }
