@@ -479,7 +479,7 @@ body.has-orderbar .footer__bottom { padding-bottom: 92px; }   /* lugar para la b
 @media (max-width: 1250px) { .header__links { display: none; } }
 .header__offers { white-space: nowrap; flex: none; }
 
-/* Celular: en el header solo logo, carrito y menú (☰ bien a la derecha).
+/* Celular: en el header solo logo, carrito y menú (menú bien a la derecha).
    "Ver ofertas", Nosotros, Cómo comprar y Contacto quedan dentro del menú. */
 @media (max-width: 768px) {
   .header__offers, .header__links { display: none; }
@@ -587,3 +587,19 @@ body.no-catbar .page { padding: 40px 48px 56px; }
 .card:hover .card__img.has-img img { transform: scale(1.04); }
 .pdp__img.has-img img { padding: 28px; }
 .slide__photo { width: 84%; height: 84%; object-fit: contain; }
+
+/* Sin emojis: monogramas e íconos de línea */
+.mono { font-family: var(--serif); font-size: 3.4rem; line-height: 1; opacity: .85; }
+.card__img .mono { font-size: 4rem; }
+.pdp__img .mono { font-size: 9rem; }
+.line .ph .mono, .search__suggest .ph .mono { font-size: 1.5rem; }
+.cat-tile .ph .mono { font-size: 2rem; }
+.slide__mono .mono { font-size: clamp(7rem, 14vw, 11rem); }
+.ico { flex: none; vertical-align: middle; }
+.benefit span { color: var(--ink); }
+.empty div { color: var(--pistachio-dark); }
+.success__icon { color: #1fa855; }
+.pdp__info div { display: flex; align-items: flex-start; gap: 10px; }
+.pdp__info .ico { color: var(--green); margin-top: 1px; }
+.filters-toggle .ico { margin-right: 2px; }
+.drawer__head .icon-btn { color: var(--ink); }

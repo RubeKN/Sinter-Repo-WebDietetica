@@ -19,10 +19,25 @@
   const isOffer = (p) => Boolean(p.oldPrice);
   const offers = () => PRODUCTS.filter(isOffer);
   const novedades = () => PRODUCTS.filter((p) => p.isNew);
-  // Foto del producto si la tiene; si no, el ícono.
+  // Íconos de línea (sin emojis)
+  const ICON = {
+    leaf: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-13 15-14-1 10-6 15-14 15"/><path d="M5 19c3-4 6-6 9-8"/></svg>`,
+    box: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>`,
+    tag: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1.3"/></svg>`,
+    truck: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h11v10H2z"/><path d="M13 9h4l4 4v3h-8"/><circle cx="6" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg>`,
+    store: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v10h16V10"/><path d="M3 10l2-6h14l2 6"/><path d="M3 10h18"/><path d="M10 20v-5h4v5"/></svg>`,
+    chat: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.6-5.3A8.5 8.5 0 1 1 21 12z"/></svg>`,
+    basket: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-2 11H5L3 9z"/><path d="M8 9l4-6 4 6"/></svg>`,
+    search: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
+    check: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16.5 9"/></svg>`,
+    sliders: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>`,
+    sprout: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12C12 7 8 5 4 5c0 5 3 7 8 7z"/><path d="M12 14c0-4 3-6 8-6 0 4-3 6-8 6z"/></svg>`,
+  };
+  // Foto del producto si la tiene; si no, su inicial (monograma) sobre el color de la categoría.
+  const mono = (p) => `<span class="mono" style="color:${catById(p.cat)?.color || "#55682a"}">${esc(p.name.charAt(0))}</span>`;
   const visual = (p, cls = "") => p.image
     ? `<img class="${cls}" src="${p.image}" alt="${esc(p.name)}" loading="lazy" decoding="async">`
-    : p.emoji;
+    : mono(p);
   const tint = (p) => {
     if (p.image) return "background:#fff";
     const c = catById(p.cat)?.color || "#888";
@@ -62,7 +77,7 @@
       this.save();
       const btn = $("#cartBtn");
       btn.classList.remove("bump"); void btn.offsetWidth; btn.classList.add("bump");
-      toast(`✓ ${p.name} (${p.variants[v].label}) agregado`);
+      toast(`${p.name} (${p.variants[v].label}) agregado al pedido`);
     },
     setQty(idx, qty) {
       if (qty <= 0) this.items.splice(idx, 1);
@@ -85,8 +100,8 @@
     const pct = Math.min(100, (sub / STORE.freeShippingFrom) * 100);
     return `<div class="free-ship">
       ${missing > 0
-        ? `Te faltan <b>${money(missing)}</b> para tener <b>envío gratis</b> 🚚`
-        : `🎉 ¡Tenés <b>envío gratis</b> en ${esc(STORE.city)}!`}
+        ? `Te faltan <b>${money(missing)}</b> para tener <b>envío gratis</b>`
+        : `¡Tenés <b>envío gratis</b> en ${esc(STORE.city)}!`}
       <div class="free-ship__bar"><div style="width:${pct}%"></div></div>
     </div>`;
   }
@@ -111,7 +126,7 @@
     const foot = $("#cartFoot");
     const lines = cart.lines();
     if (!lines.length) {
-      body.innerHTML = `<div class="empty"><div>🧺</div><p>Tu pedido está vacío.</p><a class="btn btn--gold" href="#/productos" data-close>Ver productos</a></div>`;
+      body.innerHTML = `<div class="empty"><div>${ICON.basket(40)}</div><p>Tu pedido está vacío.</p><a class="btn btn--gold" href="#/productos" data-close>Ver productos</a></div>`;
       foot.innerHTML = "";
       return;
     }
@@ -428,7 +443,7 @@
             </div>
           </div>
           <a class="slide__visual" href="#/producto/${p.id}" tabindex="-1" aria-hidden="true">
-            ${p.image ? visual(p, "slide__photo") : `<span class="slide__emoji">${p.emoji}</span>`}
+            ${p.image ? visual(p, "slide__photo") : `<span class="slide__mono">${mono(p)}</span>`}
             <span class="slide__stamp">Nuevo</span>
           </a>
         </div>
@@ -491,10 +506,10 @@
     ${carouselHTML(nuevos)}
     <div class="container">
       <div class="benefits">
-        <div class="benefit"><span>🌿</span>Productos naturales</div>
-        <div class="benefit"><span>📦</span>Fraccionado en el día</div>
-        <div class="benefit"><span>🏷️</span>Precios justos</div>
-        <div class="benefit"><span>🚚</span>Envíos a domicilio</div>
+        <div class="benefit"><span>${ICON.leaf()}</span>Productos naturales</div>
+        <div class="benefit"><span>${ICON.box()}</span>Fraccionado en el día</div>
+        <div class="benefit"><span>${ICON.tag()}</span>Precios justos</div>
+        <div class="benefit"><span>${ICON.truck()}</span>Envíos a domicilio</div>
       </div>
 
       <section class="section">
@@ -521,7 +536,7 @@
         <div class="section__head"><div><span class="eyebrow">Explorá</span><h2>Comprá por categoría</h2></div><a href="#/productos">Ver todo →</a></div>
         <div class="cat-grid">${CATEGORIES.map((c) => `
           <a class="cat-tile" href="#/categoria/${c.id}">
-            <div class="ph" style="background:${c.color}22">${c.emoji}</div>${esc(c.name)}
+            <div class="ph" style="background:${c.color}22"><span class="mono" style="color:${c.color}">${esc(c.name.charAt(0))}</span></div>${esc(c.name)}
           </a>`).join("")}</div>
       </section>
     </div>`;
@@ -550,7 +565,7 @@
         </aside>
         <div>
           <div class="toolbar">
-            <button class="btn btn--ghost btn--sm filters-toggle" id="filtersToggle">⚙ Filtros</button>
+            <button class="btn btn--ghost btn--sm filters-toggle" id="filtersToggle">${ICON.sliders(16)} Filtros</button>
             <span id="resultCount"></span>
             <label>Ordenar:
               <select id="fSort">
@@ -577,7 +592,7 @@
       $("#resultCount").textContent = `${r.length} producto${r.length === 1 ? "" : "s"}`;
       $("#results").innerHTML = r.length
         ? r.map((p) => productCard(p)).join("")
-        : `<div class="empty"><div>🔎</div><p>No encontramos productos con esos filtros.</p></div>`;
+        : `<div class="empty"><div>${ICON.search(40)}</div><p>No encontramos productos con esos filtros.</p></div>`;
     };
 
     $$("[data-tag]").forEach((cb) => cb.addEventListener("change", () => {
@@ -622,9 +637,9 @@
             <button class="btn btn--gold" id="addBtn" ${out ? "disabled" : ""}>Agregar al pedido</button>
           </div>
           <div class="pdp__info">
-            <div>🚚 <b>Envío gratis</b> en compras desde ${money(STORE.freeShippingFrom)}. Si no, ${money(STORE.shippingCost)}.</div>
-            <div>🏪 <b>Retiro sin cargo</b> en nuestro local.</div>
-            <div>💬 ¿Dudas? <a href="${waLink(`Hola! Tengo una consulta sobre ${p.name}`)}" target="_blank" rel="noopener"><b>Consultanos por WhatsApp</b></a></div>
+            <div>${ICON.truck(18)} <span><b>Envío gratis</b> en compras desde ${money(STORE.freeShippingFrom)}. Si no, ${money(STORE.shippingCost)}.</span></div>
+            <div>${ICON.store(18)} <span><b>Retiro sin cargo</b> en nuestro local.</span></div>
+            <div>${ICON.chat(18)} <span>¿Dudas? <a href="${waLink(`Hola! Tengo una consulta sobre ${p.name}`)}" target="_blank" rel="noopener"><b>Consultanos por WhatsApp</b></a></span></div>
           </div>
         </div>
       </div>
@@ -663,7 +678,7 @@
     renderCatbar(null);
     const lines = cart.lines();
     if (!lines.length) {
-      app.innerHTML = `<div class="container"><div class="page"><div class="empty"><div>🧺</div><p>No tenés productos en tu pedido.</p><a class="btn btn--gold" href="#/productos">Ver productos</a></div></div></div>`;
+      app.innerHTML = `<div class="container"><div class="page"><div class="empty"><div>${ICON.basket(40)}</div><p>No tenés productos en tu pedido.</p><a class="btn btn--gold" href="#/productos">Ver productos</a></div></div></div>`;
       return;
     }
     const saved = store.get("sinter_customer", {});
@@ -752,7 +767,7 @@
 
       const orderId = "S" + Date.now().toString(36).toUpperCase().slice(-6);
       const msg = [
-        `🧾 *Nuevo pedido ${orderId}*`,
+        `*Nuevo pedido ${orderId}*`,
         "",
         ...cart.lines().map((l) => `• ${l.qty}x ${l.p.name} (${l.p.variants[l.v].label}) — ${money(l.total)}`),
         "",
@@ -761,16 +776,16 @@
         `Envío: ${t.ship ? money(t.ship) : "Gratis"}`,
         `*Total: ${money(t.total)}*`,
         "",
-        `👤 ${data.name} · ${data.phone}`,
-        t.delivery === "envio" ? `📍 Envío a: ${data.address}${data.ref ? " (" + data.ref + ")" : ""}` : "🏪 Retiro en el local",
-        `💳 Pago: ${data.pay}`,
-        data.notes ? `📝 ${data.notes}` : null
+        `*Cliente:* ${data.name} · ${data.phone}`,
+        t.delivery === "envio" ? `*Envío a:* ${data.address}${data.ref ? " (" + data.ref + ")" : ""}` : "*Retiro en el local*",
+        `*Pago:* ${data.pay}`,
+        data.notes ? `*Notas:* ${data.notes}` : null
       ].filter((x) => x !== null).join("\n");
 
       window.open(waLink(msg), "_blank", "noopener");
       cart.clear();
       app.innerHTML = `<div class="container"><div class="page"><div class="success">
-        <div>✅</div>
+        <div class="success__icon">${ICON.check(56)}</div>
         <h1>¡Gracias, ${esc(data.name.split(" ")[0])}!</h1>
         <p>Tu pedido <b>${orderId}</b> por <b>${money(t.total)}</b> se abrió en WhatsApp. Enviá el mensaje y te confirmamos a la brevedad.</p>
         <p><a class="btn btn--wa" href="${waLink(msg)}" target="_blank" rel="noopener">Abrir WhatsApp de nuevo</a></p>
@@ -791,8 +806,8 @@
         <li><b>Enviá el pedido por WhatsApp</b><br>Te confirmamos stock, total y horario de entrega.</li>
       </ol>`,
     envios: () => `<h1>Envíos y retiro</h1>
-      <p>🚚 <b>Envío a domicilio</b> en ${esc(STORE.city)}: ${money(STORE.shippingCost)}. <b>Gratis</b> en compras desde ${money(STORE.freeShippingFrom)}.</p>
-      <p>🏪 <b>Retiro en el local</b> sin cargo, de lunes a sábado.</p>
+      <p><b>Envío a domicilio</b> en ${esc(STORE.city)}: ${money(STORE.shippingCost)}. <b>Gratis</b> en compras desde ${money(STORE.freeShippingFrom)}.</p>
+      <p><b>Retiro en el local</b> sin cargo, de lunes a sábado.</p>
       <p>Los pedidos confirmados antes de las 13 hs se entregan en el día o al siguiente día hábil.</p>`,
     faq: () => `<h1>Preguntas frecuentes</h1>
       <details open><summary>¿Los productos son sueltos o envasados?</summary><p>Fraccionamos a granel y envasamos al vacío o en bolsas con cierre en el momento.</p></details>
@@ -823,7 +838,7 @@
 
   function viewNotFound() {
     renderCatbar(null);
-    app.innerHTML = `<div class="container"><div class="page"><div class="empty"><div>🌱</div><p>No encontramos esta página.</p><a class="btn btn--gold" href="#/">Ir al inicio</a></div></div></div>`;
+    app.innerHTML = `<div class="container"><div class="page"><div class="empty"><div>${ICON.sprout(40)}</div><p>No encontramos esta página.</p><a class="btn btn--gold" href="#/">Ir al inicio</a></div></div></div>`;
   }
 
   /* ---------------- Router ---------------- */
@@ -849,7 +864,7 @@
     else if (a === "ofertas") viewCatalog({ title: "Ofertas de la semana", crumb: "Ofertas", list: offers(), active: "ofertas", query: { sort: "descuento", ...query } });
     else if (a === "categoria" && catById(b)) {
       const c = catById(b);
-      viewCatalog({ title: `${c.emoji} ${esc(c.name)}`, crumb: esc(c.name), list: PRODUCTS.filter((p) => p.cat === c.id || (c.id === "sin-tacc" && p.tags.includes("sin-tacc"))), active: c.id, query });
+      viewCatalog({ title: esc(c.name), crumb: esc(c.name), list: PRODUCTS.filter((p) => p.cat === c.id || (c.id === "sin-tacc" && p.tags.includes("sin-tacc"))), active: c.id, query });
     } else if (a === "buscar") {
       const q = (query.q || "").trim();
       $$(".search input").forEach((i) => { i.value = q; });
@@ -928,8 +943,8 @@
   /* ---------------- Init ---------------- */
   function init() {
     // Marquesina (duplicada para loop continuo)
-    const msg = `🚚 Envíos gratis en <b>${esc(STORE.city)}</b> en compras a partir de ${money(STORE.freeShippingFrom)}`;
-    const extra = `💸 ${STORE.transferDiscount * 100}% OFF pagando con transferencia`;
+    const msg = `Envíos gratis en <b>${esc(STORE.city)}</b> en compras a partir de ${money(STORE.freeShippingFrom)}`;
+    const extra = `${STORE.transferDiscount * 100}% OFF pagando con transferencia`;
     const items = Array.from({ length: 6 }, (_, i) => `<span>${i % 2 ? extra : msg}</span>`).join("");
     $("#marquee").innerHTML = items + items;
 

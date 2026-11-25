@@ -22,7 +22,7 @@ Abrir http://localhost:8000 (también se puede abrir `index.html` directo en el 
 - Catálogo con filtros (Sin TACC, vegano, orgánico, sin azúcar, keto, stock) y orden
 - Ficha de producto con presentaciones (250 g / 500 g / 1 kg), cantidad, precio con transferencia
 - Carrito persistente (localStorage) con barra flotante "Ver pedido" y progreso de envío gratis
-- Checkout: datos, envío o retiro, medio de pago, totales → genera el pedido y lo abre en WhatsApp
+- Checkout: datos, envío o retiro, medio de pago, totales y genera el pedido y lo abre en WhatsApp
 - Páginas: Nosotros, Cómo comprar, Envíos, Preguntas frecuentes, Contacto
 
 ## Configuración
