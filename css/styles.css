@@ -41,12 +41,12 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 @media (prefers-reduced-motion: reduce) { .marquee__track { animation: none; } }
 
 /* ---------- Header ---------- */
-.header { background: linear-gradient(90deg, var(--green-dark), var(--green) 55%, var(--green-dark)); color: #fff; position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 16px rgba(0,0,0,.15); }
-.header__row { display: flex; align-items: center; gap: 22px; padding: 14px 0; transition: padding .3s ease; width: min(1400px, 100% - 48px); }
+.header { background: var(--green-dark); color: #fff; position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 16px rgba(0,0,0,.15); }
+.header__row { display: flex; align-items: center; gap: 22px; padding: 14px 0; transition: padding .3s ease; width: 100%; max-width: none; padding-inline: 28px; margin: 0; }
 
 .header .logo__mark, .header .logo__name, .header .logo__tag { transition: all .3s ease; }
 /* Header compacto al bajar */
-.header.is-compact .header__row { padding: 7px 0; }
+.header.is-compact .header__row { padding-block: 7px; }
 .header.is-compact .logo__mark { width: 30px; height: 30px; font-size: 1.25rem; }
 .header.is-compact .logo__name { font-size: 1.25rem; }
 .header.is-compact .logo__tag { opacity: 0; width: 0; margin: 0; overflow: hidden; }
@@ -60,7 +60,7 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 }
 .logo__name { font-weight: 800; font-size: 1.6rem; letter-spacing: .04em; }
 .logo__tag { color: var(--gold); font-weight: 700; margin-left: 8px; white-space: nowrap; }
-.header__links { display: flex; gap: 22px; font-weight: 700; font-size: .95rem; white-space: nowrap; }
+.header__links { display: flex; gap: 26px; font-weight: 700; font-size: .95rem; white-space: nowrap; color: #fff; letter-spacing: .01em; }
 .header__links a:hover { color: var(--gold); }
 .icon-btn { background: none; border: 0; padding: 6px; border-radius: 4px; display: grid; place-items: center; }
 .cart-btn { position: relative; }
@@ -103,11 +103,11 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 .search__suggest small { margin-left: auto; color: var(--red); font-weight: 800; }
 .search__suggest .ph { width: 36px; height: 36px; font-size: 1.3rem; border-radius: 4px; }
 
-/* ---------- Category bar (ancho completo) ---------- */
-.catbar { background: var(--green-dark); color: #fff; border-top: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(0,0,0,.25); }
+/* ---------- Category bar (ancho completo, clara) ---------- */
+.catbar { background: #fff; color: var(--green-deep); border-bottom: 1px solid var(--border); box-shadow: 0 6px 16px rgba(20, 61, 37, .06); }
 .catbar__inner { display: flex; align-items: stretch; height: 52px; transition: height .3s ease; max-width: none; width: 100%; padding: 0; }
 .catbar__label {
-  display: flex; align-items: center; gap: 10px; flex: none; padding: 0 22px; background: var(--gold); color: var(--green-deep);
+  display: flex; align-items: center; gap: 10px; flex: none; padding: 0 22px 0 28px; background: var(--gold); color: var(--green-deep);
   font-size: .72rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
 }
 .catbar__label::before { content: ""; width: 12px; height: 12px; background:
@@ -118,31 +118,32 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
 .catbar__chips::-webkit-scrollbar { display: none; }
 .chip {
   position: relative; flex: 1 0 auto; display: flex; align-items: center; justify-content: center; padding: 0 20px;
-  white-space: nowrap; font-weight: 600; font-size: .88rem; color: rgba(255,255,255,.85); letter-spacing: .01em;
+  white-space: nowrap; font-weight: 600; font-size: .88rem; color: #3d4a40; letter-spacing: .01em;
   transition: color .3s ease, background .3s ease;
 }
-.chip + .chip::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 1px; background: rgba(255,255,255,.14); }
-.chip::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--gold); transform: scaleX(0); transition: transform .35s cubic-bezier(.22,.61,.36,1); }
-.chip:hover { color: #fff; background: rgba(255,255,255,.05); }
+.chip + .chip::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 1px; background: var(--border); }
+.chip::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--green); transform: scaleX(0); transition: transform .35s cubic-bezier(.22,.61,.36,1); }
+.chip:hover { color: var(--green-deep); background: var(--cream); }
 .chip:hover::after { transform: scaleX(1); }
-.chip.active { color: var(--gold); background: rgba(0,0,0,.18); font-weight: 800; }
+.chip.active { color: var(--green-deep); background: var(--green-soft); font-weight: 800; }
 .chip.active::after { transform: scaleX(1); }
-.chip--offer { color: #ff8a7a; font-weight: 800; }
+.chip--offer { color: var(--red); font-weight: 800; }
 .chip--offer::after { background: var(--red); }
+.chip--offer.active { color: var(--red); background: #fdecea; }
 .catbar__arrow {
   position: relative; flex: none; width: 52px; border: 0; padding: 0; display: grid; place-items: center;
-  background: var(--green-deep); color: var(--gold); transition: background .15s, color .15s;
+  background: #fff; color: var(--green); transition: background .15s, color .15s;
 }
-.catbar__arrow:hover { background: var(--gold); color: var(--green-deep); }
-.catbar__arrow--prev { order: -1; border-right: 1px solid rgba(255,255,255,.1); }
-.catbar__arrow--next { border-left: 1px solid rgba(255,255,255,.1); }
+.catbar__arrow:hover { background: var(--green); color: #fff; }
+.catbar__arrow--prev { order: -1; border-right: 1px solid var(--border); }
+.catbar__arrow--next { border-left: 1px solid var(--border); }
 .catbar__arrow--next::before {
-  content: ""; position: absolute; right: 100%; top: 0; bottom: 0; width: 48px; pointer-events: none;
-  background: linear-gradient(90deg, rgba(20,61,37,0), var(--green-dark));
+  content: ""; position: absolute; right: 100%; top: 0; bottom: 0; width: 56px; pointer-events: none;
+  background: linear-gradient(90deg, rgba(255,255,255,0), #fff);
 }
 .catbar__arrow--prev::after {
-  content: ""; position: absolute; left: 100%; top: 0; bottom: 0; width: 48px; pointer-events: none;
-  background: linear-gradient(270deg, rgba(20,61,37,0), var(--green-dark));
+  content: ""; position: absolute; left: 100%; top: 0; bottom: 0; width: 56px; pointer-events: none;
+  background: linear-gradient(270deg, rgba(255,255,255,0), #fff);
 }
 
 /* ---------- Hero ---------- */
@@ -367,8 +368,8 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em
   .header__row { gap: 10px; flex-wrap: wrap; }
   .logo { margin-right: auto; }
   .search { order: 5; flex-basis: 100%; max-width: none; min-width: 0; }
-  .header__row { width: calc(100% - 32px); }
-  .header.is-compact .header__row { padding: 6px 0; row-gap: 6px; }
+  .header__row { padding-inline: 16px; }
+  .header.is-compact .header__row { padding-block: 6px; row-gap: 6px; }
   .header__offers { padding: 8px 12px; font-size: .8rem; }
   .logo__name { font-size: 1.25rem; }
   .catbar__label { display: none; }
