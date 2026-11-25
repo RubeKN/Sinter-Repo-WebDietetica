@@ -532,13 +532,6 @@
         <div class="section__more"><a class="btn btn--ghost" href="#/ofertas">Ver todas las ofertas →</a></div>
       </section>
 
-      <section class="section">
-        <div class="section__head"><div><span class="eyebrow">Explorá</span><h2>Comprá por categoría</h2></div><a href="#/productos">Ver todo →</a></div>
-        <div class="cat-grid">${CATEGORIES.map((c) => `
-          <a class="cat-tile" href="#/categoria/${c.id}">
-            <div class="ph" style="background:${c.color}22"><span class="mono" style="color:${c.color}">${esc(c.name.charAt(0))}</span></div>${esc(c.name)}
-          </a>`).join("")}</div>
-      </section>
     </div>`;
     initCarousel(nuevos.length);
     startCountdown();
