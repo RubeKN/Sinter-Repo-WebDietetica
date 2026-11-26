@@ -902,3 +902,30 @@ body.no-catbar .info.info-layout { max-width: none; }
   .nv__photo { width: 104px; }
   .nv__price b { font-size: clamp(2.8rem, 4.8vw, 4.6rem); }
 }
+
+/* ---------- Novedades en celular: un poco más alta y flechas más sutiles ---------- */
+@media (max-width: 640px) {
+  .carousel--bold .nv { padding-block: 22px 48px; grid-template-columns: 1fr 92px; }
+  .nv__brand { margin-bottom: 10px; }
+  .nv__title { font-size: min(1.75rem, calc(100cqi / (var(--len, 8) * .7))); margin-bottom: 12px; }
+  .nv__btn { padding: 8px 16px; }
+  .nv__photo { width: 92px; }
+  .nv__price b { font-size: 1.25rem; }
+  .carousel--bold .carousel__arrow { width: 30px; height: 24px; bottom: 10px; opacity: .55; }
+  .carousel--bold .carousel__arrow svg { width: 22px; height: 11px; stroke-width: 1.6; }
+  .carousel--bold .carousel__arrow:active { opacity: 1; }
+  .carousel--bold .carousel__arrow--prev { right: 44px; }
+  .carousel--bold .carousel__arrow--next { right: 12px; }
+  .carousel--bold .carousel__dots { bottom: 20px; }
+}
+
+/* ---------- Beneficios: franja sutil y liviana ---------- */
+.benefits { margin-top: 18px; border-color: var(--border); box-shadow: none; }
+.benefit { padding: 12px 10px; font-size: .84rem; font-weight: 600; gap: 8px; color: var(--muted); }
+.benefit span { width: auto; height: auto; background: none; color: var(--green); }
+.benefit span .ico { width: 17px; height: 17px; }
+@media (max-width: 640px) {
+  .benefits { margin-top: 12px; }
+  .benefit { padding: 9px 6px; font-size: .74rem; gap: 6px; justify-content: flex-start; padding-left: 12px; }
+  .benefit span .ico { width: 15px; height: 15px; }
+}
