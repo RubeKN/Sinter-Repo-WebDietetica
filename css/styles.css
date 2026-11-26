@@ -1024,3 +1024,12 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
   .carousel--bold .nv { padding-block: 46px 62px; }
   .nv__photo { width: 124px; }
 }
+
+/* Novedades en computadora: flechas laterales más sutiles */
+@media (min-width: 641px) {
+  .carousel--bold .carousel__arrow { opacity: .45; width: 44px; transition: opacity .2s, color .2s; }
+  .carousel--bold .carousel__arrow svg { width: 34px; height: 16px; stroke-width: 1.4; }
+  .carousel--bold .carousel__arrow:hover { opacity: 1; color: #fff; }
+  .carousel--bold .carousel__arrow--prev { left: 20px; }
+  .carousel--bold .carousel__arrow--next { right: 20px; }
+}
