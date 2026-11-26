@@ -1122,3 +1122,24 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
   .catmenu__item--offer { grid-column: 1 / -1; border-right: 0; text-align: center; }
   .carousel--bold .carousel__arrow--next { opacity: .75; }
 }
+
+/* Sin la lupa / la × que agrega el navegador: queda solo la lupa del sitio */
+.search input { -webkit-appearance: none; appearance: none; }
+.search input::-webkit-search-decoration,
+.search input::-webkit-search-cancel-button,
+.search input::-webkit-search-results-button,
+.search input::-webkit-search-results-decoration { -webkit-appearance: none; display: none; }
+
+/* Celular: "Categorías" y buscador más finos y sutiles */
+@media (max-width: 640px) {
+  .catbar__toggle { height: 40px; font-weight: 600; font-size: .84rem; letter-spacing: .02em; color: #3f4d26; }
+  .catbar__toggle-txt { opacity: .85; }
+  .catbar__current { font-size: .8rem; }
+  .catbar__toggle-ico { width: 12px; height: 12px; opacity: .7; }
+  .search--bar, .header.is-scrolled .search--bar {
+    height: 30px; margin: 5px 12px; padding: 0 10px; background: #f7f9ef; border: 1px solid #e6ebd6; border-radius: 6px;
+  }
+  .search--bar svg { width: 13px; height: 13px; opacity: .6; }
+  .search--bar input { font-size: .8rem; }
+  .search--bar input::placeholder { color: #8a917f; }
+}
