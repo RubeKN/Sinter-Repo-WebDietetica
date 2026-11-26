@@ -1058,3 +1058,8 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
 /* Fotos de producto más grandes dentro de la tarjeta */
 .card__img { aspect-ratio: 4 / 3; }
 .card__img.has-img img { padding: 10px 12px; }
+
+/* Novedades en computadora: un poco más alta, con más aire arriba */
+@media (min-width: 641px) {
+  .carousel--bold .nv { padding-block: 74px 66px; }
+}
