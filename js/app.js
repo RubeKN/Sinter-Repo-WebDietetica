@@ -290,7 +290,20 @@
     const chips = [chip("productos", "#/productos", "Todo"), chip("novedades", "#/novedades", "Novedades", "chip--new")]
       .concat(CATEGORIES.map((c) => chip(c.id, `#/categoria/${c.id}`, esc(c.name))))
       .concat(chip("ofertas", "#/ofertas", "Ofertas", "chip--offer"));
-    bar.innerHTML = `<div class="catbar__scroller">
+    // Lista para el menú desplegable del celular
+    const menuItems = [["productos", "#/productos", "Todo"], ["novedades", "#/novedades", "Novedades"]]
+      .concat(CATEGORIES.map((c) => [c.id, `#/categoria/${c.id}`, esc(c.name)]))
+      .concat([["ofertas", "#/ofertas", "Ofertas"]]);
+    const labelOf = (k) => (menuItems.find((m) => m[0] === k) || [])[2] || "";
+    bar.innerHTML = `<button class="catbar__toggle" type="button" aria-expanded="false" aria-controls="catMenu">
+        <span class="catbar__toggle-txt">Categorías</span>
+        <span class="catbar__current">${active ? labelOf(active) : ""}</span>
+        <svg class="catbar__toggle-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M5 9l7 7 7-7"/></svg>
+      </button>
+      <nav class="catbar__menu" id="catMenu" hidden>
+        ${menuItems.map(([k, href, label]) => `<a class="catmenu__item ${k === "ofertas" ? "catmenu__item--offer" : ""} ${active === k ? "active" : ""}" data-key="${k}" href="${href}">${label}</a>`).join("")}
+      </nav>
+      <div class="catbar__scroller">
         <button class="catbar__arrow catbar__arrow--prev" data-dir="-1" aria-label="Ver categorías anteriores" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="catbar__chips">${chips.join("")}</div>
         <button class="catbar__arrow catbar__arrow--next" data-dir="1" aria-label="Ver más categorías" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -398,8 +411,24 @@
     // Las fuentes pueden cambiar el ancho de las categorías: medir de nuevo al cargarlas
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { lastW = 0; relayout(); });
 
+    // Abrir / cerrar el menú desplegable (celular)
+    const toggle = $(".catbar__toggle", bar);
+    const menu = $("#catMenu", bar);
+    const setMenu = (open) => {
+      menu.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+      bar.classList.toggle("menu-open", open);
+    };
+    toggle.addEventListener("click", () => setMenu(menu.hidden));
+    menu.addEventListener("click", (e) => { if (e.target.closest("a")) setMenu(false); });
+    document.addEventListener("click", (e) => { if (!menu.hidden && !e.target.closest(".catbar__toggle, #catMenu")) setMenu(false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
+
     bar._cat = {
+      close() { setMenu(false); },
       setActive(key) {
+        $(".catbar__current", bar).textContent = labelOf(key);
+        $$(".catmenu__item", bar).forEach((m) => m.classList.toggle("active", m.dataset.key === key));
         items.forEach((c) => c.classList.toggle("active", c.dataset.key === key));
         const p = pageOf(key);
         if (p >= 0 && p !== page) show(p, p > page ? 1 : -1);
@@ -463,7 +492,7 @@
     return `<section class="carousel carousel--bold" aria-roledescription="carousel" aria-label="Novedades y nuevos ingresos">
       <div class="carousel__track" id="carTrack">${slides}</div>
       <button class="carousel__arrow carousel__arrow--prev" data-car="-1" aria-label="Novedad anterior"><svg width="44" height="20" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M42 10H3M11 2 3 10l8 8"/></svg></button>
-      <button class="carousel__arrow carousel__arrow--next" data-car="1" aria-label="Novedad siguiente"><svg width="44" height="20" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10h39M33 2l8 8-8 8"/></svg></button>
+      <button class="carousel__arrow carousel__arrow--next" data-car="1" aria-label="Novedad siguiente"><svg class="arr-long" width="44" height="20" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10h39M33 2l8 8-8 8"/></svg><svg class="arr-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M9 5l7 7-7 7"/></svg></button>
       <div class="carousel__dots">${items.map((_, i) => `<button data-dot="${i}" aria-label="Ir a la novedad ${i + 1}"><span></span></button>`).join("")}</div>
     </section>`;
   }
@@ -946,6 +975,7 @@
     const [a, b] = parts;
     closeDrawers();
     $$(".search__suggest").forEach((box) => { box.hidden = true; });
+    $("#catbar")._cat?.close();
 
     stopCarousel();
     // Contacto, preguntas frecuentes, envíos, cómo comprar y nosotros: sin barra de categorías.
