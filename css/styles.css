@@ -929,3 +929,48 @@ body.no-catbar .info.info-layout { max-width: none; }
   .benefit { padding: 9px 6px; font-size: .74rem; gap: 6px; justify-content: flex-start; padding-left: 12px; }
   .benefit span .ico { width: 15px; height: 15px; }
 }
+
+/* =========================================================
+   Barra "Ver pedido": fina, de una línea, con botón para ocultarla
+   ========================================================= */
+.orderbar {
+  display: flex; align-items: stretch; padding: 0; gap: 0; width: min(520px, calc(100% - 24px)); bottom: 14px;
+  background: var(--ink); border: 0; border-left: 4px solid var(--pistachio); border-radius: 8px; overflow: hidden;
+  box-shadow: 0 8px 22px rgba(0,0,0,.22); cursor: default;
+}
+.orderbar__main { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px 8px 16px; background: none; border: 0; color: #fff; text-align: left; }
+.orderbar__info { display: flex; align-items: baseline; gap: 10px; }
+.orderbar__info small { font-size: .8rem; letter-spacing: 0; color: #cfdacb; font-weight: 600; }
+.orderbar__info b { font-size: 1.05rem; }
+.orderbar__cta { font-weight: 800; font-size: .88rem; padding: 7px 14px; background: var(--pistachio); color: var(--ink); border-radius: 6px; }
+.orderbar__main:hover .orderbar__cta { background: #dbe6a6; }
+.orderbar__hide { flex: none; width: 40px; display: grid; place-items: center; background: none; border: 0; border-left: 1px solid rgba(255,255,255,.12); color: #cfdacb; }
+.orderbar__hide:hover { color: #fff; background: rgba(255,255,255,.06); }
+
+.orderpill {
+  position: fixed; left: 16px; bottom: 16px; z-index: 80; width: 48px; height: 48px; border-radius: 50%; border: 0;
+  background: var(--ink); color: #fff; display: grid; place-items: center; box-shadow: 0 6px 16px rgba(0,0,0,.25);
+  animation: rise .3s ease;
+}
+.orderpill:hover { background: #1d270f; }
+.orderpill__count {
+  position: absolute; top: -3px; right: -3px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  background: var(--pistachio); color: var(--ink); font-size: .72rem; font-weight: 800; display: grid; place-items: center;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(20px); } }
+.orderbar { animation: riseBar .3s ease; }
+@keyframes riseBar { from { opacity: 0; transform: translate(-50%, 20px); } }
+
+/* Espacio al pie según lo que esté visible */
+body.has-orderbar .footer__bottom { padding-bottom: 80px; }
+body.has-orderpill .footer__bottom { padding-bottom: 70px; }
+@media (max-width: 768px) {
+  .orderbar:not([hidden]) ~ .wa-float { bottom: 72px; }
+}
+@media (max-width: 640px) {
+  .orderbar__main { padding: 6px 8px 6px 12px; }
+  .orderbar__info small { font-size: .74rem; }
+  .orderbar__info b { font-size: .98rem; }
+  .orderbar__cta { font-size: .8rem; padding: 6px 11px; }
+  .orderbar__hide { width: 36px; }
+}

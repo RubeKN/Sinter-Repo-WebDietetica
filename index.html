@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#C9D58B">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=nv5">
+  <link rel="stylesheet" href="css/styles.css?v=orderbar2">
 </head>
 <body>
   <div class="marquee" aria-label="Promoción de envío"><div class="marquee__track" id="marquee"></div></div>
@@ -100,9 +100,18 @@
   </footer>
 
   <!-- Barra flotante de pedido -->
-  <button class="orderbar" id="orderbar" hidden>
-    <span class="orderbar__info"><small id="orderbarCount">1 ARTÍCULO</small><b id="orderbarTotal">$0</b></span>
-    <span class="orderbar__cta">Ver pedido</span>
+  <div class="orderbar" id="orderbar" hidden>
+    <button class="orderbar__main" id="orderbarOpen">
+      <span class="orderbar__info"><small id="orderbarCount">1 artículo</small><b id="orderbarTotal">$0</b></span>
+      <span class="orderbar__cta">Ver pedido</span>
+    </button>
+    <button class="orderbar__hide" id="orderbarHide" aria-label="Ocultar barra del pedido" title="Ocultar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <!-- Acceso mínimo al pedido cuando la barra está oculta -->
+  <button class="orderpill" id="orderpill" hidden aria-label="Ver pedido">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L22 7H6"/></svg><span class="orderpill__count" id="orderpillCount">1</span>
   </button>
 
   <!-- Botón flotante de WhatsApp -->
@@ -126,7 +135,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="js/data.js?v=nv5"></script>
-  <script src="js/app.js?v=nv5"></script>
+  <script src="js/data.js?v=orderbar2"></script>
+  <script src="js/app.js?v=orderbar2"></script>
 </body>
 </html>

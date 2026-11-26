@@ -72,6 +72,7 @@
       const p = productById(id);
       if (!p || p.stock <= 0) return;
       const found = this.items.find((i) => i.id === id && i.v === v);
+      store.set("sinter_bar_min", false);   // al agregar algo, la barra vuelve a aparecer
       if (found) found.qty = Math.min(found.qty + qty, 99);
       else this.items.push({ id, v, qty });
       this.save();
@@ -117,9 +118,14 @@
     const bar = $("#orderbar");
     const onCheckout = location.hash.startsWith("#/checkout");
     const onInfo = location.hash.startsWith("#/info/");   // cómo comprar, envíos, preguntas, nosotros, contacto
-    bar.hidden = count === 0 || onCheckout || onInfo;
+    const showOrder = count > 0 && !onCheckout && !onInfo;
+    const minimized = store.get("sinter_bar_min", false);   // la persona la ocultó con la ×
+    bar.hidden = !showOrder || minimized;
+    $("#orderpill").hidden = !showOrder || !minimized;
+    $("#orderpillCount").textContent = count;
     document.body.classList.toggle("has-orderbar", !bar.hidden);
-    $("#orderbarCount").textContent = `${count} ${count === 1 ? "ARTÍCULO" : "ARTÍCULOS"}`;
+    document.body.classList.toggle("has-orderpill", showOrder && minimized);
+    $("#orderbarCount").textContent = `${count} ${count === 1 ? "artículo" : "artículos"}`;
     $("#orderbarTotal").textContent = money(sub);
 
     // Drawer
@@ -986,7 +992,9 @@
     $$(".js-year").forEach((el) => { el.textContent = new Date().getFullYear(); });
 
     $("#cartBtn").addEventListener("click", () => openDrawer("#cartDrawer"));
-    $("#orderbar").addEventListener("click", () => openDrawer("#cartDrawer"));
+    $("#orderbarOpen").addEventListener("click", () => openDrawer("#cartDrawer"));
+    $("#orderpill").addEventListener("click", () => openDrawer("#cartDrawer"));
+    $("#orderbarHide").addEventListener("click", () => { store.set("sinter_bar_min", true); renderCartUI(); });
     $("#menuBtn").addEventListener("click", () => openDrawer("#menuDrawer"));
     $("#overlay").addEventListener("click", closeDrawers);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawers(); });
