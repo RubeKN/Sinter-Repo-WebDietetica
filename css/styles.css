@@ -1180,3 +1180,8 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
   .pdp__img { max-height: 190px; }
   .pdp .tags { margin: 6px 0 10px; }
 }
+
+/* Centrado óptico de los íconos de abajo (el carrito "pesa" arriba a la derecha) */
+.orderpill svg { display: block; transform: translate(-1.5px, 1.5px); }
+.orderbar__hide svg { display: block; }
+.orderbar__hide { line-height: 0; }
