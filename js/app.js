@@ -2,6 +2,7 @@
   "use strict";
 
   const { STORE, CATEGORIES, TAGS, PRODUCTS } = window;
+  const REVIEWS = window.REVIEWS || [];
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
   const app = $("#app");
@@ -510,6 +511,60 @@
     play();
   }
 
+  /* ---------------- Comentarios de clientes ---------------- */
+  function reviewsHTML() {
+    if (!REVIEWS.length) return "";
+    const stars = (n) => Array.from({ length: 5 }, (_, i) =>
+      `<span class="rv__star ${i < n ? "on" : ""}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3l-5.7 3 1.1-6.3L2.8 9.5l6.4-.9z"/></svg></span>`).join("");
+    const source = (r) => r.source === "google" ? "Reseña de Google" : r.source === "ejemplo" ? "Reseña de ejemplo" : esc(r.source || "");
+    return `<section class="section reviews" aria-label="Comentarios de clientes">
+      <h2 class="reviews__title">Lo que dicen nuestros clientes</h2>
+      <div class="reviews__wrap">
+        <button class="reviews__arrow reviews__arrow--prev" data-rv="-1" aria-label="Comentarios anteriores"><svg width="40" height="18" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M42 10H3M11 2 3 10l8 8"/></svg></button>
+        <div class="reviews__track" id="rvTrack">
+          ${REVIEWS.map((r) => `<article class="rv">
+            <header class="rv__head"><b>${esc(r.name)}</b><span class="rv__stars" aria-label="${r.stars} de 5 estrellas">${stars(r.stars)}</span></header>
+            <h3 class="rv__title">${esc(r.title)}</h3>
+            <p class="rv__text">${esc(r.text)}</p>
+            <footer class="rv__src">${source(r)}</footer>
+          </article>`).join("")}
+        </div>
+        <button class="reviews__arrow reviews__arrow--next" data-rv="1" aria-label="Más comentarios"><svg width="40" height="18" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10h39M33 2l8 8-8 8"/></svg></button>
+      </div>
+      <div class="reviews__dots" id="rvDots"></div>
+    </section>`;
+  }
+
+  function initReviews() {
+    const track = $("#rvTrack");
+    if (!track) return;
+    const cards = $$(".rv", track);
+    const dotsBox = $("#rvDots");
+    const perView = () => Math.max(1, Math.round(track.clientWidth / cards[0].offsetWidth));
+    const pages = () => Math.max(1, cards.length - perView() + 1);
+    const current = () => Math.round(track.scrollLeft / (cards[0].offsetWidth + parseFloat(getComputedStyle(track).columnGap || 0)));
+    const goTo = (i) => {
+      const step = cards[0].offsetWidth + parseFloat(getComputedStyle(track).columnGap || 0);
+      track.scrollTo({ left: Math.max(0, Math.min(i, pages() - 1)) * step, behavior: reduceMotion ? "auto" : "smooth" });
+    };
+    const renderDots = () => {
+      const n = pages();
+      dotsBox.innerHTML = n > 1 ? Array.from({ length: n }, (_, i) => `<button data-i="${i}" aria-label="Ir al comentario ${i + 1}"></button>`).join("") : "";
+      update();
+    };
+    const update = () => {
+      const c = current();
+      $$("button", dotsBox).forEach((d, i) => d.classList.toggle("active", i === c));
+      $(".reviews__arrow--prev").hidden = c <= 0;
+      $(".reviews__arrow--next").hidden = c >= pages() - 1;
+    };
+    dotsBox.addEventListener("click", (e) => { const d = e.target.closest("[data-i]"); if (d) goTo(Number(d.dataset.i)); });
+    $$("[data-rv]").forEach((b) => b.addEventListener("click", () => goTo(current() + Number(b.dataset.rv))));
+    track.addEventListener("scroll", () => requestAnimationFrame(update), { passive: true });
+    window.addEventListener("resize", renderDots);
+    renderDots();
+  }
+
   function viewHome() {
     renderCatbar(null);
     const off = offers();
@@ -549,8 +604,11 @@
         <div class="section__more"><a class="btn btn--ghost" href="#/ofertas">Ver todas las ofertas →</a></div>
       </section>
 
+      ${reviewsHTML()}
+
     </div>`;
     initCarousel(nuevos.length);
+    initReviews();
     startCountdown();
   }
 

@@ -43,6 +43,17 @@ en `js/data.js` con el campo `image` del producto, por ejemplo:
 
 Los productos sin `image` muestran el ícono de su categoría.
 
+## Comentarios de clientes
+
+La sección "Lo que dicen nuestros clientes" (al final del inicio) lee la lista `REVIEWS` de `js/data.js`.
+Hoy tiene reseñas **de ejemplo** (`source: "ejemplo"`). Reemplazarlas por reseñas reales:
+
+```js
+{ name: "Nombre A.", stars: 5, title: "Título corto", text: "Comentario del cliente", source: "google" }
+```
+
+Con `source: "google"` se muestra "Reseña de Google" debajo de cada una.
+
 ## Próximos pasos sugeridos
 
 - Completar las fotos de los productos que todavía usan ícono

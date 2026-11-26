@@ -130,3 +130,20 @@ window.PRODUCTS = [
   { id: 34, image: "img/productos/budin-limon.webp", name: "Budín de Limón Sin TACC", cat: "sin-tacc", price: 3400, oldPrice: 3900, tags: ["sin-tacc"], variants: [{ label: "Unidad 300 g", mult: 1 }], stock: 15,
     desc: "Budín húmedo de limón con glaseado, elaborado en planta libre de gluten." }
 ];
+
+// Comentarios de clientes (sección antes del pie en el inicio).
+// IMPORTANTE: estos son EJEMPLOS para ver el diseño (source: "ejemplo").
+// Reemplazarlos por reseñas reales; en ese caso poner source: "google" (o el origen real)
+// y se mostrará "Reseña de Google" debajo de cada una.
+window.REVIEWS = [
+  { name: "Cliente de ejemplo", stars: 5, title: "Productos frescos y buena atención", source: "ejemplo",
+    text: "Acá va el comentario real de un cliente. Por ejemplo, qué le gustó de los productos, de la atención o de la entrega." },
+  { name: "Cliente de ejemplo", stars: 5, title: "Siempre encuentro lo que busco", source: "ejemplo",
+    text: "Acá va otra reseña real. Conviene copiarla tal cual la escribió la persona, con su nombre y la cantidad de estrellas." },
+  { name: "Cliente de ejemplo", stars: 5, title: "Pedido rápido por WhatsApp", source: "ejemplo",
+    text: "Texto de ejemplo para ver cómo queda una reseña de largo medio dentro de la tarjeta." },
+  { name: "Cliente de ejemplo", stars: 4, title: "Muy buena variedad", source: "ejemplo",
+    text: "Las reseñas pueden tener de 1 a 5 estrellas. Esta es de ejemplo y hay que reemplazarla por una real." },
+  { name: "Cliente de ejemplo", stars: 5, title: "Recomendado", source: "ejemplo",
+    text: "Texto de ejemplo. Cuando tengas las reseñas reales, se cargan en js/data.js en la lista REVIEWS." }
+];
