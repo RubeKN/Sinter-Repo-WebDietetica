@@ -429,33 +429,34 @@
   function carouselHTML(items) {
     const slides = items.map((p, i) => {
       const cat = catById(p.cat);
-      return `<article class="slide ${i % 2 ? "slide--alt" : ""}" data-i="${i}" aria-roledescription="slide" aria-label="${i + 1} de ${items.length}">
-        <div class="container slide__inner">
-          <div class="slide__text">
-            <span class="slide__kicker">Nuevo ingreso · ${esc(cat.name)}</span>
-            <h2 class="slide__title">${esc(p.name)}</h2>
-            <p class="slide__desc">${esc(p.desc)}</p>
-            <div class="slide__price">
-              ${p.oldPrice ? `<span class="old">${money(p.oldPrice)}</span>` : ""}
-              <b class="${p.oldPrice ? "now" : ""}">${money(p.price)}</b>
-              <small>${esc(p.variants[0].label)}</small>
-            </div>
-            <div class="slide__ctas">
-              <a class="btn" href="#/producto/${p.id}">Ver producto</a>
-              <a class="btn btn--ghost" href="#/novedades">Todas las novedades</a>
+      // Primera palabra en blanco, el resto en pistacho
+      const [first, ...rest] = p.name.split(" ");
+      return `<article class="slide" data-i="${i}" aria-roledescription="slide" aria-label="${i + 1} de ${items.length}">
+        <div class="container nv">
+          <div class="nv__left">
+            <div class="nv__brand"><img src="img/logo-96.png" width="24" height="24" alt=""> SINTER <span>· Nuevo ingreso</span></div>
+            <h2 class="nv__title" style="--len:${Math.max(7, ...p.name.split(" ").map((w) => w.length))}"><span>${esc(first)}</span>${rest.length ? `<em>${esc(rest.join(" "))}</em>` : ""}</h2>
+            <p class="nv__desc">${esc(p.desc)}</p>
+            <div class="nv__ctas">
+              <a class="nv__btn" href="#/producto/${p.id}">Ver producto</a>
+              <a class="nv__link" href="#/novedades">Todas las novedades</a>
             </div>
           </div>
-          <a class="slide__visual" href="#/producto/${p.id}" tabindex="-1" aria-hidden="true">
-            ${p.image ? visual(p, "slide__photo") : `<span class="slide__mono">${mono(p)}</span>`}
-            <span class="slide__stamp">Nuevo</span>
-          </a>
+          <div class="nv__right">
+            <a class="nv__photo" href="#/producto/${p.id}" tabindex="-1" aria-hidden="true">${p.image ? visual(p) : mono(p)}</a>
+            <div class="nv__price">
+              <small>${esc(cat.name)}</small>
+              <b>${money(p.price)}</b>
+              <span>${esc(p.variants[0].label)}${p.oldPrice ? ` · antes ${money(p.oldPrice)}` : " · Nuevo en la tienda"}</span>
+            </div>
+          </div>
         </div>
       </article>`;
     }).join("");
-    return `<section class="carousel" aria-roledescription="carousel" aria-label="Novedades y nuevos ingresos">
+    return `<section class="carousel carousel--bold" aria-roledescription="carousel" aria-label="Novedades y nuevos ingresos">
       <div class="carousel__track" id="carTrack">${slides}</div>
-      <button class="carousel__arrow carousel__arrow--prev" data-car="-1" aria-label="Novedad anterior"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <button class="carousel__arrow carousel__arrow--next" data-car="1" aria-label="Novedad siguiente"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="carousel__arrow carousel__arrow--prev" data-car="-1" aria-label="Novedad anterior"><svg width="44" height="20" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M42 10H3M11 2 3 10l8 8"/></svg></button>
+      <button class="carousel__arrow carousel__arrow--next" data-car="1" aria-label="Novedad siguiente"><svg width="44" height="20" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10h39M33 2l8 8-8 8"/></svg></button>
       <div class="carousel__dots">${items.map((_, i) => `<button data-dot="${i}" aria-label="Ir a la novedad ${i + 1}"><span></span></button>`).join("")}</div>
     </section>`;
   }
