@@ -1111,6 +1111,12 @@
     $("#menuBtn").addEventListener("click", () => setMenuView("main"));
     $$(".js-wa").forEach((a) => { a.href = waLink("Hola! Quería hacer una consulta"); });
     $("#waFloat").href = waLink("Hola! Quería hacer una consulta");
+    // Volver arriba: visible solo después de bajar un poco
+    const toTop = $("#toTop");
+    const syncToTop = () => toTop.classList.toggle("show", window.scrollY > 500);
+    window.addEventListener("scroll", syncToTop, { passive: true });
+    toTop.addEventListener("click", () => smoothScrollTo(0));
+    syncToTop();
     $$(".js-year").forEach((el) => { el.textContent = new Date().getFullYear(); });
 
     $("#cartBtn").addEventListener("click", () => openDrawer("#cartDrawer"));
