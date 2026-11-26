@@ -478,7 +478,14 @@
       root.style.setProperty("--car-delay", DELAY + "ms");
       dots.forEach((d) => { const bar = $("span", d); bar.style.animation = "none"; void bar.offsetWidth; bar.style.animation = ""; });
     };
-    const play = () => { stopCarousel(); if (!reduceMotion) carouselTimer = setInterval(() => go(idx + 1), DELAY); root.classList.remove("paused"); };
+    // En celular no pasa solo: se avanza con las flechas o deslizando
+    const auto = () => !reduceMotion && !isMobile.matches;
+    const play = () => {
+      stopCarousel();
+      root.classList.toggle("no-auto", !auto());
+      if (auto()) carouselTimer = setInterval(() => go(idx + 1), DELAY);
+      root.classList.remove("paused");
+    };
     const pause = () => { stopCarousel(); root.classList.add("paused"); };
     $$("[data-car]", root).forEach((b) => b.addEventListener("click", () => { go(idx + Number(b.dataset.car)); play(); }));
     dots.forEach((d) => d.addEventListener("click", () => { go(Number(d.dataset.dot)); play(); }));

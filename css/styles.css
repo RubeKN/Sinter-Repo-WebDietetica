@@ -862,3 +862,43 @@ body.no-catbar .info.info-layout { max-width: none; }
 .nv__left { container-type: inline-size; min-width: 0; }
 .nv__title { overflow-wrap: normal; word-break: normal; font-size: min(5.6rem, calc(100cqi / (var(--len, 8) * .72))); }
 @media (max-width: 640px) { .nv__title { font-size: min(1.9rem, calc(100cqi / (var(--len, 8) * .7))); } }
+
+/* ---------- Novedades: banda más fina y contenido centrado en cada diapositiva ---------- */
+.carousel--bold .slide { display: flex; align-items: center; }
+.carousel--bold .nv { width: min(1100px, 100% - 32px); margin-inline: auto; min-height: 0; padding-block: 34px 46px; }
+.nv__brand { margin-bottom: 16px; }
+.nv__title { margin-bottom: 14px; font-size: min(4.4rem, calc(100cqi / (var(--len, 8) * .72))); }
+.nv__desc { font-size: 1.1rem; margin-bottom: 20px; }
+.nv__btn { padding: 12px 28px; font-size: 1rem; }
+.nv__right { gap: 14px; }
+.nv__photo { width: 120px; }
+.nv__price b { font-size: clamp(3rem, 5.6vw, 5.4rem); }
+.nv__price span { margin-top: 8px; font-size: 1.02rem; }
+.carousel--bold .carousel__dots { bottom: 18px; }
+/* sin pase automático: la línea activa se ve completa */
+.carousel.no-auto .carousel__dots button.active span { animation: none; width: 100%; }
+
+/* Celular: más fino y con flechas siempre visibles */
+@media (max-width: 640px) {
+  .carousel--bold .nv { padding-block: 12px 40px; grid-template-columns: 1fr 78px; }
+  .nv__brand { margin-bottom: 6px; }
+  .nv__title { font-size: min(1.6rem, calc(100cqi / (var(--len, 8) * .7))); margin-bottom: 8px; }
+  .nv__ctas { gap: 10px; }
+  .nv__btn { font-size: .8rem; padding: 7px 14px; }
+  .nv__link { display: none; }
+  .nv__photo { width: 78px; }
+  .nv__price b { font-size: 1.15rem; }
+  .carousel--bold .carousel__arrow {
+    display: grid; place-items: center; top: auto; bottom: 6px; transform: none; width: 36px; height: 28px; opacity: 1;
+  }
+  .carousel--bold .carousel__arrow svg { width: 30px; height: 14px; }
+  .carousel--bold .carousel__arrow--prev { left: auto; right: 52px; }
+  .carousel--bold .carousel__arrow--next { right: 12px; }
+  .carousel--bold .carousel__dots { bottom: 18px; }
+}
+@media (min-width: 641px) {
+  .carousel--bold .nv { padding-block: 28px 44px; }
+  .nv__title { font-size: min(3.8rem, calc(100cqi / (var(--len, 8) * .72))); }
+  .nv__photo { width: 104px; }
+  .nv__price b { font-size: clamp(2.8rem, 4.8vw, 4.6rem); }
+}
