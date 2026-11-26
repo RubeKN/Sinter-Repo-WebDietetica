@@ -1185,3 +1185,17 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
 .orderpill svg { display: block; transform: translate(-1.5px, 1.5px); }
 .orderbar__hide svg { display: block; }
 .orderbar__hide { line-height: 0; }
+
+/* Botón × de la barra "Ver pedido": círculo chico dentro de la barra, con aire parejo */
+.orderbar { align-items: center; }
+.orderbar__main { padding-right: 8px; }
+.orderbar__hide {
+  flex: none; align-self: center; width: 30px; height: 30px; margin: 0 10px 0 2px; border: 0; border-radius: 50%;
+  background: rgba(255,255,255,.09); color: #dfe7d9; display: grid; place-items: center;
+}
+.orderbar__hide:hover, .orderbar__hide:active { background: rgba(255,255,255,.18); color: #fff; }
+.orderbar__hide svg { width: 12px; height: 12px; }
+@media (max-width: 640px) {
+  .orderbar__hide { width: 28px; height: 28px; margin: 0 8px 0 0; }
+  .orderbar__main { padding-right: 8px; }
+}
