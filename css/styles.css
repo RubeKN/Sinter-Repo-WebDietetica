@@ -1033,3 +1033,14 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
   .carousel--bold .carousel__arrow--prev { left: 20px; }
   .carousel--bold .carousel__arrow--next { right: 20px; }
 }
+
+/* Comentarios de clientes: fondo pistacho suave, a todo el ancho y unido al pie */
+.reviews {
+  --rv-bg: #edf2dd;
+  position: relative; background: var(--rv-bg);
+  box-shadow: 0 0 0 100vmax var(--rv-bg); clip-path: inset(0 -100vmax);   /* fondo de borde a borde sin desbordar */
+  margin-top: 56px; padding: 56px 0 64px; margin-bottom: -56px;           /* cubre el espacio hasta el pie */
+}
+.reviews .rv { border-color: #dfe7c6; box-shadow: 0 4px 14px rgba(44,58,26,.05); }
+.reviews__arrow { color: var(--ink); }
+@media (max-width: 640px) { .reviews { margin-top: 40px; padding: 40px 0 48px; margin-bottom: -40px; } }
