@@ -1199,3 +1199,37 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
   .orderbar__hide { width: 28px; height: 28px; margin: 0 8px 0 0; }
   .orderbar__main { padding-right: 8px; }
 }
+
+/* Menú ☰: "Catálogo" desplegable con las categorías */
+.menu-cat { border-bottom: 1px solid var(--border); }
+.menu-cat summary {
+  list-style: none; display: flex; align-items: center; justify-content: space-between; padding: 12px 4px;
+  font-weight: 700; color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.menu-cat summary::-webkit-details-marker { display: none; }
+.menu-cat summary svg { transition: transform .25s ease; opacity: .7; }
+.menu-cat[open] summary svg { transform: rotate(180deg); }
+.menu-cat__list { display: grid; padding: 0 0 10px 12px; border-left: 2px solid var(--pistachio); margin: 0 0 10px 6px; animation: catMenuIn .2s ease; }
+.menu-list .menu-cat__list a { padding: 8px 4px; border-bottom: 0; font-weight: 500; font-size: .92rem; color: #3f4d26; }
+.menu-list .menu-cat__list a:hover { color: var(--ink); }
+@keyframes catMenuIn { from { opacity: 0; transform: translateY(-6px); } }
+
+/* Menú ☰: panel "Catálogo" que se desliza dentro del menú */
+#menuList { overflow-x: hidden; }
+.menu-views { display: flex; width: 200%; transition: transform .3s cubic-bezier(.22,.61,.36,1); }
+.menu-view { width: 50%; flex: none; }
+#menuList.show-cat .menu-views { transform: translateX(-50%); }
+.menu-view--cat { visibility: hidden; transition: visibility 0s .3s; }
+#menuList.show-cat .menu-view--cat { visibility: visible; transition: none; }
+#menuList.show-cat .menu-view:first-child { visibility: hidden; transition: visibility 0s .3s; }
+.menu-next {
+  display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 4px;
+  background: none; border: 0; border-bottom: 1px solid var(--border); font: inherit; font-weight: 700; color: var(--ink);
+  text-align: left; -webkit-tap-highlight-color: transparent;
+}
+.menu-next svg { opacity: .7; }
+.menu-back {
+  display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 4px; padding: 6px 0; background: none; border: 0;
+  font: inherit; font-size: .86rem; font-weight: 600; color: var(--green); -webkit-tap-highlight-color: transparent;
+}
+.menu-view__title { margin: 4px 4px 6px; font-size: 1.25rem; font-weight: 800; color: var(--ink); }

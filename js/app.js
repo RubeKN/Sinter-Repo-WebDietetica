@@ -1082,11 +1082,33 @@
     const items = Array.from({ length: 6 }, (_, i) => `<span>${i % 2 ? extra : msg}</span>`).join("");
     $("#marquee").innerHTML = items + items;
 
+    // Menú ☰ con dos vistas: el menú principal y el panel "Catálogo" (categorías)
     $("#menuList").innerHTML = `
-      <a href="#/">Inicio</a>
-      <a href="#/info/nosotros">Nosotros</a><a href="#/info/como-comprar">Cómo comprar</a><a href="#/info/contacto">Contacto</a>
-      <h5>Tienda</h5><a href="#/ofertas" class="menu-offer">Ofertas de la semana</a><a href="#/novedades">Novedades</a><a href="#/productos">Todos los productos</a>
-      <h5>Ayuda</h5><a href="#/info/envios">Envíos y retiro</a><a href="#/info/faq">Preguntas frecuentes</a>`;
+      <div class="menu-views">
+        <div class="menu-view">
+          <a href="#/">Inicio</a>
+          <a href="#/info/nosotros">Nosotros</a><a href="#/info/como-comprar">Cómo comprar</a><a href="#/info/contacto">Contacto</a>
+          <h5>Tienda</h5>
+          <button type="button" class="menu-next" data-menu-view="cat">Catálogo<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M9 5l7 7-7 7"/></svg></button>
+          <a href="#/ofertas" class="menu-offer">Ofertas de la semana</a><a href="#/novedades">Novedades</a><a href="#/productos">Todos los productos</a>
+          <h5>Ayuda</h5><a href="#/info/envios">Envíos y retiro</a><a href="#/info/faq">Preguntas frecuentes</a>
+        </div>
+        <div class="menu-view menu-view--cat" aria-label="Catálogo">
+          <button type="button" class="menu-back" data-menu-view="main"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M15 5l-7 7 7 7"/></svg> Volver</button>
+          <h4 class="menu-view__title">Catálogo</h4>
+          <a href="#/productos">Todo</a>
+          <a href="#/novedades">Novedades</a>
+          ${CATEGORIES.map((c) => `<a href="#/categoria/${c.id}">${esc(c.name)}</a>`).join("")}
+          <a href="#/ofertas" class="menu-offer">Ofertas</a>
+        </div>
+      </div>`;
+    const setMenuView = (v) => $("#menuList").classList.toggle("show-cat", v === "cat");
+    $("#menuList").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-menu-view]");
+      if (btn) { setMenuView(btn.dataset.menuView); $("#menuList").scrollTop = 0; }
+    });
+    // Cada vez que se abre el menú, arranca en la vista principal
+    $("#menuBtn").addEventListener("click", () => setMenuView("main"));
     $$(".js-wa").forEach((a) => { a.href = waLink("Hola! Quería hacer una consulta"); });
     $("#waFloat").href = waLink("Hola! Quería hacer una consulta");
     $$(".js-year").forEach((el) => { el.textContent = new Date().getFullYear(); });
