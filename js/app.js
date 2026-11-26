@@ -199,7 +199,7 @@
   let scrollAnim = null;
 
   // Animación de scroll propia (más suave y pareja que la nativa).
-  function smoothScrollTo(targetY, duration = 550) {
+  function smoothScrollTo(targetY) {
     cancelAnimationFrame(scrollAnim);
     const startY = window.scrollY;
     const maxY = document.documentElement.scrollHeight - window.innerHeight;
@@ -207,20 +207,22 @@
     const dist = endY - startY;
     if (Math.abs(dist) < 2) return;
     if (reduceMotion) { window.scrollTo(0, endY); return; }
-    // Si el recorrido es largo, saltamos cerca del destino (oculto por el fade del contenido)
-    // y hacemos un deslizamiento corto: se siente suave en vez de "viajar" por toda la página.
-    const GLIDE = 220;
+    // Recorridos largos: saltamos casi hasta el destino (lo tapa el fundido del contenido)
+    // y terminamos con un deslizamiento corto, en vez de "viajar" por toda la página.
+    const GLIDE = 140;
     let from = startY;
-    if (Math.abs(dist) > GLIDE * 2) {
+    if (Math.abs(dist) > GLIDE * 1.5) {
       from = endY - Math.sign(dist) * GLIDE;
       window.scrollTo(0, from);
     }
     const d = endY - from;
+    // Duración según la distancia: corta y ágil (entre 220 y 380 ms)
+    const duration = Math.min(380, Math.max(220, Math.abs(d) * 1.6));
+    const ease = (t) => 1 - Math.pow(1 - t, 3);   // arranca rápido y frena suave (sin tirones)
     const t0 = performance.now();
-    const ease = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
     const step = (now) => {
       const t = Math.min(1, (now - t0) / duration);
-      window.scrollTo(0, from + d * ease(t));
+      window.scrollTo(0, Math.round(from + d * ease(t)));
       if (t < 1) scrollAnim = requestAnimationFrame(step);
     };
     scrollAnim = requestAnimationFrame(step);

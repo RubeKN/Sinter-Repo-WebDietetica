@@ -34,8 +34,8 @@ a { color: inherit; text-decoration: none; }
 button { font: inherit; cursor: pointer; color: inherit; }
 input, select, textarea { font: inherit; color: inherit; }
 .container { width: min(1100px, 100% - 32px); margin-inline: auto; }
-.page-enter { animation: pageIn .45s cubic-bezier(.22,.61,.36,1); }
-@keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.page-enter { animation: pageIn .28s ease-out; }
+@keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .page-enter { animation: none; } }
 .main { padding-top: 24px; outline: none; min-height: 50vh; }
 h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em; }
@@ -772,6 +772,7 @@ body.no-catbar .info.info-layout { max-width: none; }
 .card .btn:hover { background: #2d5440; }
 
 /* El menú y el carrito siempre con texto oscuro (no heredan el texto claro de las páginas verdes) */
-.drawer, .search__suggest, .toast { color: var(--text); }
+.drawer, .search__suggest { color: var(--text); }
+.toast { color: #fff; }   /* letras blancas sobre el fondo oscuro del aviso */
 .drawer .menu-list a { color: var(--ink); }
 .drawer .menu-list .menu-offer { color: var(--red); }
