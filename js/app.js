@@ -994,6 +994,12 @@
     $("#cartBtn").addEventListener("click", () => openDrawer("#cartDrawer"));
     $("#orderbarOpen").addEventListener("click", () => openDrawer("#cartDrawer"));
     $("#orderpill").addEventListener("click", () => openDrawer("#cartDrawer"));
+    // Si el carrito del header está a la vista, el carrito minimizado de abajo se esconde (y viceversa)
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(([e]) => {
+        document.body.classList.toggle("header-cart-visible", e.isIntersecting);
+      }, { threshold: 0.6 }).observe($("#cartBtn"));
+    }
     $("#orderbarHide").addEventListener("click", () => { store.set("sinter_bar_min", true); renderCartUI(); });
     $("#menuBtn").addEventListener("click", () => openDrawer("#menuDrawer"));
     $("#overlay").addEventListener("click", closeDrawers);

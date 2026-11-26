@@ -974,3 +974,7 @@ body.has-orderpill .footer__bottom { padding-bottom: 70px; }
   .orderbar__cta { font-size: .8rem; padding: 6px 11px; }
   .orderbar__hide { width: 36px; }
 }
+
+/* Carrito minimizado: solo cuando el carrito del header no se ve */
+.orderpill { transition: opacity .25s ease, transform .25s ease; }
+body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translateY(10px); pointer-events: none; }
