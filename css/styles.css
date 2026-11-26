@@ -1143,3 +1143,40 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
   .search--bar input { font-size: .8rem; }
   .search--bar input::placeholder { color: #8a917f; }
 }
+
+/* ---------- Computadora: barra de categorías más fina ---------- */
+@media (min-width: 641px) {
+  .catbar__inner { height: 44px; }
+  .chip { font-size: .86rem; }
+  .catbar__arrow { width: 44px; }
+  .header.is-scrolled .search--bar { margin-block: 6px; }
+  .header.is-scrolled .search--bar input { padding-block: 0; }
+}
+
+/* ---------- Celular ---------- */
+@media (max-width: 640px) {
+  /* Ficha de producto: imagen más chica para ver la info sin bajar tanto */
+  .pdp { gap: 18px; }
+  .pdp__img { aspect-ratio: 16 / 10; max-height: 230px; width: 100%; }
+  .pdp__img.has-img img { padding: 14px; }
+  .pdp__img .mono { font-size: 5rem; }
+  .pdp h1 { font-size: 1.7rem; margin-top: 2px; }
+  .pdp .now { font-size: 1.7rem; }
+  .pdp__desc { margin: 8px 0; font-size: .92rem; }
+  .pdp .label { margin-top: 10px; }
+
+  /* Novedades más alta */
+  .carousel--bold .nv { padding-block: 44px 44px; grid-template-columns: 1fr 118px; }
+  .nv__photo { width: 118px; }
+  .nv__title { font-size: min(2.2rem, calc(100cqi / (var(--len, 8) * .7))); }
+  .nv__price b { font-size: 1.4rem; }
+
+  /* Barra de categorías más baja y menú más compacto */
+  .catbar__toggle { height: 34px; font-size: .8rem; }
+  .catmenu__item { padding: 9px 14px; font-size: .82rem; }
+  .catbar__menu { max-height: 60vh; }
+}
+@media (max-width: 640px) {
+  .pdp__img { max-height: 190px; }
+  .pdp .tags { margin: 6px 0 10px; }
+}

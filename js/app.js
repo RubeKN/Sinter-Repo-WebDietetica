@@ -1002,7 +1002,7 @@
     app.classList.add("page-enter");
     // Listados (categorías, ofertas, búsqueda): ir al inicio de los productos.
     // Resto de páginas: volver arriba de todo.
-    if (["productos", "ofertas", "categoria", "buscar"].includes(a)) scrollToContent();
+    if (["productos", "ofertas", "categoria", "buscar", "novedades"].includes(a) || (a === "producto" && isMobile.matches)) scrollToContent();
     else smoothScrollTo(0);
     onScrollHeader();
     app.focus({ preventScroll: true });
