@@ -901,7 +901,6 @@
       viewCatalog({ title: esc(c.name), crumb: esc(c.name), list: PRODUCTS.filter((p) => p.cat === c.id || (c.id === "sin-tacc" && p.tags.includes("sin-tacc"))), active: c.id, query });
     } else if (a === "buscar") {
       const q = (query.q || "").trim();
-      $$(".search input").forEach((i) => { i.value = q; });
       viewCatalog({ title: `Resultados para “${esc(q)}”`, crumb: "Búsqueda", list: search(q), active: null, query });
     } else if (a === "producto") viewProduct(b);
     else if (a === "checkout") viewCheckout();
@@ -961,17 +960,30 @@
         links.forEach((l, i) => l.classList.toggle("hl", i === hl));
       } else if (e.key === "Enter" && hl >= 0) {
         e.preventDefault();
-        location.hash = links[hl].getAttribute("href");
+        const href = links[hl].getAttribute("href");
+        clearSearch();
+        location.hash = href;
       } else if (e.key === "Escape") box.hidden = true;
     });
     document.addEventListener("click", (e) => { if (!form.contains(e.target)) box.hidden = true; });
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const q = input.value.trim();
-      box.hidden = true;
+      clearSearch();
       input.blur();
       location.hash = q ? `#/buscar?q=${encodeURIComponent(q)}` : "#/productos";
     });
+    // Al tocar un producto sugerido, se limpia el buscador
+    box.addEventListener("click", (e) => { if (e.target.closest("a")) clearSearch(); });
+    // Si deja de escribir y sale del buscador sin buscar, también se limpia
+    input.addEventListener("blur", () => {
+      setTimeout(() => { if (!document.activeElement?.closest?.(".search")) clearSearch(); }, 180);
+    });
+  }
+
+  function clearSearch() {
+    $$(".search input").forEach((i) => { i.value = ""; });
+    $$(".search__suggest").forEach((b) => { b.hidden = true; });
   }
 
   /* ---------------- Init ---------------- */
@@ -1029,6 +1041,10 @@
     initSearch($("#searchForm"));
     initSearch($("#barSearchForm"));
     window.addEventListener("hashchange", route);
+    // Siempre se entra por el inicio, aunque haya productos en el carrito o se recargue otra página
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    if (location.hash && location.hash !== "#/") history.replaceState(null, "", location.pathname + location.search + "#/");
+    window.scrollTo(0, 0);
     route();
   }
 
