@@ -1044,3 +1044,17 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
 .reviews .rv { border-color: #dfe7c6; box-shadow: 0 4px 14px rgba(44,58,26,.05); }
 .reviews__arrow { color: var(--ink); }
 @media (max-width: 640px) { .reviews { margin-top: 40px; padding: 40px 0 48px; margin-bottom: -40px; } }
+
+/* Selector "Ordenar": flecha propia, centrada y alineada */
+.toolbar label { display: inline-flex; align-items: center; gap: 8px; }
+.toolbar select {
+  -webkit-appearance: none; appearance: none; margin: 0; height: 40px; line-height: 1;
+  padding: 0 40px 0 14px; border: 1px solid var(--border); border-radius: 4px; color: var(--ink); font-weight: 600; cursor: pointer;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%232c3a1a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 14px center;
+}
+.toolbar select:hover { border-color: var(--pistachio-dark); }
+.toolbar select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+
+/* Fotos de producto más grandes dentro de la tarjeta */
+.card__img { aspect-ratio: 4 / 3; }
+.card__img.has-img img { padding: 10px 12px; }
