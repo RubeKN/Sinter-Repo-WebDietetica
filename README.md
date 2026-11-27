@@ -54,6 +54,24 @@ Hoy tiene reseñas **de ejemplo** (`source: "ejemplo"`). Reemplazarlas por rese�
 
 Con `source: "google"` se muestra "Reseña de Google" debajo de cada una.
 
+## Panel de administración
+
+Disponible en `/admin` (en local: `admin.html`).
+
+- **Demo:** ingreso con `demo@sinter.com` / `demo1234` (se muestran en la pantalla de ingreso).
+- Los datos pasan siempre por la **capa de datos** `js/db.js` (`window.DB`). Hoy usa el
+  adaptador **demo**: parte de `js/data.js` y guarda los cambios en el navegador (localStorage).
+  "Restablecer demo" vuelve todo al estado original.
+- Los pedidos hechos en la tienda quedan registrados y aparecen en el panel.
+- **Para hacerlo real**, se reemplaza el adaptador de `js/db.js` por uno conectado a una base de
+  datos (recomendado: Supabase, con login real y fotos en su almacenamiento). La tienda y el panel
+  no cambian.
+- Si se modifican los datos iniciales de `js/data.js`, subir `VERSION` en `js/db.js` para que la
+  demo los vuelva a cargar.
+
+Etapas: 1) estructura, ingreso y resumen ✔ · 2) productos y aumento masivo de precios ·
+3) pedidos · 4) ofertas, portada, categorías, reseñas y configuración.
+
 ## Próximos pasos sugeridos
 
 - Completar las fotos de los productos que todavía usan ícono

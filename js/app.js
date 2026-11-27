@@ -1,8 +1,8 @@
-(() => {
+(async () => {
   "use strict";
 
-  const { STORE, CATEGORIES, TAGS, PRODUCTS } = window;
-  const REVIEWS = window.REVIEWS || [];
+  // Los datos se leen siempre a través de la capa de datos (js/db.js)
+  const { STORE, CATEGORIES, TAGS, PRODUCTS, REVIEWS = [] } = await window.DB.loadCatalog();
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
   const app = $("#app");
@@ -925,6 +925,15 @@
         `*Pago:* ${data.pay}`,
         data.notes ? `*Notas:* ${data.notes}` : null
       ].filter((x) => x !== null).join("\n");
+
+      // El pedido queda registrado para el panel de administración
+      window.DB.createOrder({
+        id: orderId,
+        customer: { name: data.name, phone: data.phone, address: t.delivery === "envio" ? data.address : "", ref: data.ref || "" },
+        delivery: t.delivery, pay: data.pay, notes: data.notes || "",
+        items: cart.lines().map((l) => ({ id: l.p.id, name: l.p.name, variant: l.p.variants[l.v].label, qty: l.qty, unit: l.unit })),
+        subtotal: t.sub, discount: Math.round(t.disc), shipping: t.ship, total: Math.round(t.total)
+      }).catch(() => {});
 
       window.open(waLink(msg), "_blank", "noopener");
       cart.clear();
