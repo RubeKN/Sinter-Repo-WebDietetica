@@ -109,7 +109,8 @@
     await DB.reset(); toast("Demo restablecida"); route();
   });
 
-  function route() {
+  async function route() {
+    await expireUnconfirmed();
     const parts = location.hash.replace(/^#\/?/, "").split("/");
     const id = parts[0] || "inicio";
     const sec = SECTIONS.find((s) => s.id === id) || SECTIONS[0];
@@ -147,7 +148,8 @@
   const DAY = 86400000;
   const dayKey = (d) => { const x = new Date(d); return `${x.getFullYear()}-${x.getMonth()}-${x.getDate()}`; };
   const STATUS = {
-    nuevo: { label: "Nuevo", cls: "st--new" },
+    sin_confirmar: { label: "Sin confirmar", cls: "st--pending" },
+    nuevo: { label: "Confirmado", cls: "st--new" },
     preparando: { label: "Preparando", cls: "st--prep" },
     listo: { label: "Listo", cls: "st--ready" },
     entregado: { label: "Entregado", cls: "st--done" },
@@ -158,12 +160,13 @@
   async function renderDashboard() {
     const [orders, products, store] = await Promise.all([DB.listOrders(), DB.getProducts(), DB.getStore()]);
     const now = new Date();
-    const valid = orders.filter((o) => o.status !== "cancelado");
+    const valid = orders.filter((o) => !["cancelado", "sin_confirmar"].includes(o.status));
+    const unconfirmed = orders.filter((o) => o.status === "sin_confirmar");
     const today = valid.filter((o) => dayKey(o.createdAt) === dayKey(now));
     const last30 = valid.filter((o) => now - new Date(o.createdAt) < 30 * DAY);
     const prev30 = valid.filter((o) => { const a = now - new Date(o.createdAt); return a >= 30 * DAY && a < 60 * DAY; });
     const sum = (list) => list.reduce((a, o) => a + o.total, 0);
-    const pending = orders.filter((o) => ["nuevo", "preparando", "listo"].includes(o.status));
+    const pending = orders.filter((o) => ["sin_confirmar", "nuevo", "preparando", "listo"].includes(o.status));
     const avg = last30.length ? sum(last30) / last30.length : 0;
     const outOfStock = products.filter((p) => p.stock <= 0);
     const lowStock = products.filter((p) => p.stock > 0 && p.stock < 20).sort((a, b) => a.stock - b.stock);
@@ -189,6 +192,7 @@
       </div>
       ${hasDemo ? `<div class="notice">${icon("alert", 18)}<span>Estás viendo <b>datos de demostración</b>. Los pedidos que hagas en la tienda desde este navegador aparecen acá.</span></div>` : ""}
 
+      ${unconfirmed.length ? `<a class="alert-unconf" href="#/pedidos" onclick="window.__ordersTab='sin_confirmar'">${icon("clock", 20)}<span><b>${unconfirmed.length} pedido${unconfirmed.length === 1 ? "" : "s"} sin confirmar.</b> Confirmalos cuando te llegue el WhatsApp del cliente con el código.</span><em>Ver ${icon("arrow", 14)}</em></a>` : ""}
       <section class="kpis">
         ${kpi("cash", "Ventas de hoy", money(sum(today)), `${today.length} pedido${today.length === 1 ? "" : "s"}`)}
         ${kpi("trend", "Últimos 30 días", money(sum(last30)), trendText(sum(last30), sum(prev30)) || `${last30.length} pedidos`)}
@@ -696,8 +700,25 @@
   PATHS.x = '<path d="M6 6l12 12M18 6L6 18"/>';
   PATHS.user = '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>';
 
-  const FLOW = ["nuevo", "preparando", "listo", "entregado"];
-  const NEXT_LABEL = { nuevo: "Empezar a preparar", preparando: "Marcar como listo", listo: "Marcar como entregado" };
+  const FLOW = ["sin_confirmar", "nuevo", "preparando", "listo", "entregado"];
+  const NEXT_LABEL = { sin_confirmar: "Confirmar pedido", nuevo: "Empezar a preparar", preparando: "Marcar como listo", listo: "Marcar como entregado" };
+  const firstHistory = (o) => [{ status: "sin_confirmar", at: o.createdAt }];
+  // Desde cuándo está sin confirmar (si se reabrió, cuenta desde ese momento)
+  const pendingSince = (o) => { const h = [...(o.history || firstHistory(o))].reverse().find((x) => x.status === "sin_confirmar"); return new Date(h ? h.at : o.createdAt); };
+
+  // Cancela solos los pedidos sin confirmar que pasaron el tiempo configurado
+  async function expireUnconfirmed() {
+    const [orders, store] = await Promise.all([DB.listOrders(), DB.getStore()]);
+    const hours = Number(store.autoCancelHours) || 0; if (!hours) return 0;
+    const limit = hours * 3600000; let n = 0;
+    for (const o of orders) {
+      if (o.status === "sin_confirmar" && Date.now() - pendingSince(o) > limit) {
+        await setStatus(o, "cancelado", { auto: true }); n++;
+      }
+    }
+    if (n) toast(`${n} pedido${n === 1 ? "" : "s"} sin confirmar se cancel${n === 1 ? "ó" : "aron"} automáticamente`);
+    return n;
+  }
   const oState = { status: "activos", q: "", range: "30", delivery: "" };
   const fmtDate = (d, opt = { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) => new Date(d).toLocaleString("es-AR", opt);
   const itemsCount = (o) => o.items.reduce((a, it) => a + it.qty, 0);
@@ -706,7 +727,8 @@
     const first = (o.customer?.name || "").split(" ")[0];
     const shop = store.name || "la tienda";
     const msgs = {
-      nuevo: `Hola ${first}! Recibimos tu pedido ${o.id} en ${shop}. En breve lo empezamos a preparar.`,
+      sin_confirmar: `Hola ${first}! Vimos tu pedido ${o.id} en ${shop}. ¿Nos confirmás que está todo bien para prepararlo?`,
+      nuevo: `Hola ${first}! Tu pedido ${o.id} en ${shop} quedó confirmado. En breve lo empezamos a preparar.`,
       preparando: `Hola ${first}! Ya estamos preparando tu pedido ${o.id}.`,
       listo: o.delivery === "retiro" ? `Hola ${first}! Tu pedido ${o.id} está listo para retirar.` : `Hola ${first}! Tu pedido ${o.id} está listo y sale para tu domicilio.`,
       entregado: `Hola ${first}! Gracias por tu compra en ${shop}. ¡Que lo disfrutes!`,
@@ -716,8 +738,8 @@
   };
   const deliveryLabel = (o) => o.delivery === "retiro" ? "Retiro en local" : "Envío a domicilio";
 
-  async function setStatus(o, status) {
-    const history = [...(o.history || [{ status: "nuevo", at: o.createdAt }]), { status, at: new Date().toISOString() }];
+  async function setStatus(o, status, extra = {}) {
+    const history = [...(o.history || firstHistory(o)), { status, at: new Date().toISOString(), ...extra }];
     await DB.updateOrder(o.id, { status, history });
     Object.assign(o, { status, history });
     refreshBadge();
@@ -725,7 +747,7 @@
 
   async function refreshBadge() {
     const orders = await DB.listOrders();
-    const n = orders.filter((o) => o.status === "nuevo").length;
+    const n = orders.filter((o) => ["sin_confirmar", "nuevo"].includes(o.status)).length;
     const link = $('.side__link[data-sec="pedidos"]'); if (!link) return;
     let b = $(".side__count", link);
     if (!b) { b = document.createElement("b"); b.className = "side__count"; link.appendChild(b); }
@@ -734,11 +756,12 @@
 
   async function renderOrders() {
     const orders = await DB.listOrders();
-    const counts = { activos: 0, nuevo: 0, preparando: 0, listo: 0, entregado: 0, cancelado: 0, todos: orders.length };
-    orders.forEach((o) => { counts[o.status] = (counts[o.status] || 0) + 1; if (["nuevo", "preparando", "listo"].includes(o.status)) counts.activos++; });
-    const TABS = [["activos", "Para atender"], ["nuevo", "Nuevos"], ["preparando", "Preparando"], ["listo", "Listos"], ["entregado", "Entregados"], ["cancelado", "Cancelados"], ["todos", "Todos"]];
+    if (window.__ordersTab) { oState.status = window.__ordersTab; window.__ordersTab = null; }
+    const counts = { activos: 0, sin_confirmar: 0, nuevo: 0, preparando: 0, listo: 0, entregado: 0, cancelado: 0, todos: orders.length };
+    orders.forEach((o) => { counts[o.status] = (counts[o.status] || 0) + 1; if (["sin_confirmar", "nuevo", "preparando", "listo"].includes(o.status)) counts.activos++; });
+    const TABS = [["activos", "Para atender"], ["sin_confirmar", "Sin confirmar"], ["nuevo", "Confirmados"], ["preparando", "Preparando"], ["listo", "Listos"], ["entregado", "Entregados"], ["cancelado", "Cancelados"], ["todos", "Todos"]];
     view.innerHTML = `
-      <div class="page-head"><div><h2>Pedidos</h2><p class="muted">${counts.activos} para atender · ${counts.nuevo} nuevo${counts.nuevo === 1 ? "" : "s"}</p></div></div>
+      <div class="page-head"><div><h2>Pedidos</h2><p class="muted">${counts.activos} para atender · ${counts.sin_confirmar} sin confirmar</p></div></div>
       <div class="otabs" id="otabs">${TABS.map(([k, l]) => `<button type="button" data-t="${k}" class="${oState.status === k ? "on" : ""}">${l}<span>${counts[k] || 0}</span></button>`).join("")}</div>
       <div class="filters">
         <label class="searchbox">${icon("search", 18)}<input id="oq" type="text" placeholder="Buscar por número o cliente…" value="${esc(oState.q)}" autocomplete="off"></label>
@@ -752,7 +775,7 @@
       const now = new Date(); const start = new Date(now); start.setHours(0, 0, 0, 0);
       const minDate = oState.range ? new Date(start.getTime() - (Number(oState.range) - 1) * 86400000) : null;
       const list = orders.filter((o) =>
-        (oState.status === "todos" || (oState.status === "activos" ? ["nuevo", "preparando", "listo"].includes(o.status) : o.status === oState.status)) &&
+        (oState.status === "todos" || (oState.status === "activos" ? ["sin_confirmar", "nuevo", "preparando", "listo"].includes(o.status) : o.status === oState.status)) &&
         (!q || o.id.toLowerCase().includes(q) || (o.customer?.name || "").toLowerCase().includes(q)) &&
         (!minDate || new Date(o.createdAt) >= minDate) &&
         (!oState.delivery || o.delivery === oState.delivery));
@@ -793,7 +816,11 @@
     if (!o) { view.innerHTML = `<div class="soon"><h2>Pedido no encontrado</h2><a class="btn btn--ghost" href="#/pedidos">Volver a pedidos</a></div>`; return; }
     $("#pageTitle").textContent = `Pedido ${o.id}`;
     const packed = new Set(o.packed || []);
-    const history = o.history || [{ status: "nuevo", at: o.createdAt }];
+    const history = o.history || firstHistory(o);
+    const lastCancel = [...history].reverse().find((h) => h.status === "cancelado");
+    const hours = Number(store.autoCancelHours) || 0;
+    const leftMs = hours ? hours * 3600000 - (Date.now() - pendingSince(o)) : 0;
+    const leftTxt = leftMs > 0 ? (leftMs >= 3600000 ? `${Math.floor(leftMs / 3600000)} h ${Math.floor((leftMs % 3600000) / 60000)} min` : `${Math.max(1, Math.floor(leftMs / 60000))} min`) : "";
     const reached = (s) => history.find((h) => h.status === s);
     const idx = FLOW.indexOf(o.status);
     const imgOf = (it) => products.find((p) => p.id === it.id);
@@ -808,11 +835,15 @@
         </div>
       </div>
 
+      ${o.status === "sin_confirmar" ? `<div class="await">
+        <span class="await__ico">${icon("wa", 22)}</span>
+        <div><b>Esperando el WhatsApp del cliente</b><span>Confirmá el pedido cuando te llegue un mensaje con el código <code>${esc(o.id)}</code>.${hours ? ` Si no se confirma, se cancela solo en <b>${leftTxt}</b>.` : ""}</span></div>
+      </div>` : ""}
       <section class="card steps-card">
         <ol class="ostep">${FLOW.map((s, i) => { const h = reached(s); return `<li class="${o.status === "cancelado" ? "" : (i < idx || o.status === "entregado") ? "done" : i === idx ? "now" : ""}">
           <span class="ostep__dot">${(i < idx || o.status === "entregado") && o.status !== "cancelado" ? icon("check", 14) : i + 1}</span><b>${STATUS[s].label}</b><small>${h ? fmtDate(h.at) : ""}</small></li>`; }).join("")}</ol>
         <div class="ostep__actions">
-          ${o.status === "cancelado" ? `<span class="muted">Pedido cancelado${reached("cancelado") ? " el " + fmtDate(reached("cancelado").at) : ""}.</span><button class="btn btn--ghost btn--sm" type="button" data-set="nuevo">Reabrir pedido</button>`
+          ${o.status === "cancelado" ? `<span class="muted">${lastCancel?.auto ? `Cancelado automáticamente: no se confirmó en ${hours || 24} h` : "Pedido cancelado"}${lastCancel ? " (" + fmtDate(lastCancel.at) + ")" : ""}.</span><button class="btn btn--ghost btn--sm" type="button" data-set="sin_confirmar">Reabrir pedido</button>`
             : `${NEXT_LABEL[o.status] ? `<button class="btn btn--primary" type="button" data-set="${FLOW[idx + 1]}">${icon("check", 18)} ${NEXT_LABEL[o.status]}</button>` : `<span class="done-msg">${icon("check", 18)} Pedido entregado</span>`}
                ${idx > 0 ? `<button class="btn btn--ghost btn--sm" type="button" data-set="${FLOW[idx - 1]}">Volver a "${STATUS[FLOW[idx - 1]].label}"</button>` : ""}
                ${o.status !== "entregado" ? `<button class="btn btn--danger-ghost btn--sm" type="button" data-set="cancelado">${icon("x", 16)} Cancelar pedido</button>` : ""}`}
@@ -900,7 +931,7 @@
     if (e.key !== "sinter_demo_db" || $("#shell").hidden) return;
     const orders = await DB.listOrders();
     const newest = orders[0]?.id;
-    if (lastNew && newest && newest !== lastNew && orders[0].status === "nuevo" && !orders[0].demo) toast(`Nuevo pedido ${newest} de ${orders[0].customer?.name || "un cliente"}`);
+    if (lastNew && newest && newest !== lastNew && orders[0].status === "sin_confirmar" && !orders[0].demo) toast(`Nuevo pedido ${newest} de ${orders[0].customer?.name || "un cliente"}`);
     lastNew = newest;
     refreshBadge();
     const sec = location.hash.replace(/^#\/?/, "").split("/");
@@ -1160,6 +1191,12 @@
             <label class="f">Horarios<input name="hours" value="${esc(d.hours)}"></label>
           </section>
           <section class="card">
+            <h3 class="card__title">Pedidos sin confirmar</h3>
+            <label class="f">Cancelar automáticamente si no se confirman en
+              <select name="autoCancelHours" class="select">${[[0, "Nunca"], [6, "6 horas"], [12, "12 horas"], [24, "24 horas"], [48, "48 horas"], [72, "3 días"]].map(([v, l]) => `<option value="${v}" ${Number(d.autoCancelHours) === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+            <p class="hint">Un pedido queda "sin confirmar" hasta que te llega el WhatsApp del cliente y lo confirmás en Pedidos.</p>
+          </section>
+          <section class="card">
             <h3 class="card__title">Envíos</h3>
             <div class="f-row"><label class="f">Costo de envío<span class="money"><i>$</i><input name="shippingCost" type="number" min="0" step="50" value="${d.shippingCost}"></span></label>
               <label class="f">Envío gratis desde<span class="money"><i>$</i><input name="freeShippingFrom" type="number" min="0" step="500" value="${d.freeShippingFrom}"></span></label></div>
@@ -1191,6 +1228,7 @@
       d.whatsapp = d.whatsapp.replace(/\D/g, "");
       d.shippingCost = Math.max(0, Math.round(Number(f.shippingCost.value) || 0));
       d.freeShippingFrom = Math.max(0, Math.round(Number(f.freeShippingFrom.value) || 0));
+      d.autoCancelHours = Number(f.autoCancelHours.value) || 0;
       $$(".color-in code", f).forEach((c, i) => { c.textContent = i ? d.colorDark : d.colorBrand; });
       drawMini();
     };
@@ -1212,7 +1250,7 @@
       if (!d.name || !d.shortName) return toast("Completá el nombre de la tienda");
       if (d.whatsapp && d.whatsapp.length < 10) return toast("Revisá el número de WhatsApp");
       await DB.saveStore({ name: d.name, shortName: d.shortName, tagline: d.tagline, logo: d.logo, colorBrand: d.colorBrand, colorDark: d.colorDark,
-        whatsapp: d.whatsapp, city: d.city, address: d.address, hours: d.hours, shippingCost: d.shippingCost, freeShippingFrom: d.freeShippingFrom });
+        whatsapp: d.whatsapp, city: d.city, address: d.address, hours: d.hours, shippingCost: d.shippingCost, freeShippingFrom: d.freeShippingFrom, autoCancelHours: d.autoCancelHours });
       paintBrand();
       toast("Configuración guardada. Recargá la tienda para verla.");
     });

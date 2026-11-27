@@ -1320,3 +1320,11 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
 @media (max-width: 640px) { .pcard__add { font-size: .78rem; } }
 
 :root { --nv-bg: #14221a; }
+
+/* Pantalla de gracias: código y recordatorio de enviar el WhatsApp */
+.success__code { display: grid; gap: 2px; justify-items: center; margin: 14px 0; font-size: .86rem; color: var(--muted); }
+.success__code b { font-size: 2rem; letter-spacing: .08em; color: var(--ink); }
+.success__code span { font-weight: 800; color: var(--ink); }
+.success__warn { display: grid; gap: 4px; max-width: 460px; margin: 0 auto 18px; padding: 14px 16px; border-radius: 10px; background: #fff7e0; border: 1px solid #f0dc9a; color: #5c4600; text-align: left; font-size: .92rem; line-height: 1.45; }
+.success .success__warn { font-size: .92rem; }
+.success .success__warn b { font-size: 1rem; }

@@ -42,7 +42,8 @@
     name: "Sinter Natural", shortName: "SINTER", tagline: "Dietética natural",
     logo: "", colorBrand: "#c9d58b", colorDark: "#213f2f",
     address: "Av. Ejemplo 1234", hours: "Lunes a sábado de 9 a 13 y de 16 a 20 hs",
-    instagram: "", showCountdown: true, heroOrder: []
+    instagram: "", showCountdown: true, heroOrder: [],
+    autoCancelHours: 24   // pedidos sin confirmar se cancelan solos después de X horas (0 = nunca)
   };
   const withDefaults = (store) => ({ ...STORE_DEFAULTS, ...store });
   const ls = {
@@ -89,7 +90,7 @@
         const delivery = rnd() < .65 ? "envio" : "retiro";
         const discount = pay === "Transferencia" ? Math.round(subtotal * .05) : 0;
         const shipping = delivery === "envio" && subtotal < 25000 ? 2500 : 0;
-        const status = d === 0 ? pick(["nuevo", "nuevo", "preparando"]) : d === 1 ? pick(["preparando", "listo", "entregado"]) : "entregado";
+        const status = d === 0 ? pick(["sin_confirmar", "sin_confirmar", "nuevo", "preparando"]) : d === 1 ? pick(["preparando", "listo", "entregado", "sin_confirmar"]) : "entregado";
         orders.push({
           id: "S" + date.getTime().toString(36).toUpperCase().slice(-6),
           createdAt: date.toISOString(), status,
@@ -164,7 +165,12 @@
 
     /* Pedidos */
     listOrders() { return ok(read().orders); },
-    createOrder(o) { const db = read(); db.orders.unshift({ status: "nuevo", createdAt: new Date().toISOString(), ...o }); write(db); return ok(o); },
+    createOrder(o) {
+      const db = read(); const at = new Date().toISOString();
+      // Entra "sin confirmar": se confirma cuando el cliente manda el WhatsApp con el código
+      db.orders.unshift({ status: "sin_confirmar", createdAt: at, history: [{ status: "sin_confirmar", at }], ...o });
+      write(db); return ok(o);
+    },
     updateOrder(id, patch) {
       const db = read(); const o = db.orders.find((x) => x.id === id);
       if (o) Object.assign(o, patch);

@@ -948,8 +948,10 @@
       app.innerHTML = `<div class="container"><div class="page"><div class="success">
         <div class="success__icon">${ICON.check(56)}</div>
         <h1>¡Gracias, ${esc(data.name.split(" ")[0])}!</h1>
-        <p>Tu pedido <b>${orderId}</b> por <b>${money(t.total)}</b> se abrió en WhatsApp. Enviá el mensaje y te confirmamos a la brevedad.</p>
-        <p><a class="btn btn--wa" href="${waLink(msg)}" target="_blank" rel="noopener">Abrir WhatsApp de nuevo</a></p>
+        <p class="success__code">Tu código de pedido<b>${orderId}</b><span>${money(t.total)}</span></p>
+        <div class="success__warn"><b>Último paso: enviá el mensaje de WhatsApp.</b>
+          <span>Tu pedido queda tomado cuando nos llega ese mensaje con el código. Si WhatsApp no se abrió, tocá el botón.${Number(STORE.autoCancelHours) ? ` Los pedidos sin confirmar se cancelan a las ${Number(STORE.autoCancelHours)} h.` : ""}</span></div>
+        <p><a class="btn btn--wa" href="${waLink(msg)}" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a></p>
         <a class="btn btn--ghost" href="#/">Volver al inicio</a>
       </div></div></div>`;
     });
