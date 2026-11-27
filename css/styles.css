@@ -1249,3 +1249,72 @@ body.header-cart-visible .orderpill { opacity: 0; transform: scale(.7) translate
   .to-top { right: 18px; bottom: 72px; width: 38px; height: 38px; }
   .orderbar:not([hidden]) ~ .to-top { bottom: 128px; }   /* sube junto con WhatsApp cuando está "Ver pedido" */
 }
+
+/* =========================================================
+   Inicio: filas de productos a todo el ancho
+   ========================================================= */
+.prow { padding: 48px clamp(16px, 4vw, 64px) 8px; }
+.prow__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+.prow__head h2 { margin: 0; font-size: clamp(1.6rem, 2.4vw, 2.2rem); color: var(--ink); }
+.prow__head-right { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.prow__link { color: var(--green); font-weight: 800; font-size: .92rem; white-space: nowrap; }
+.prow__wrap { position: relative; }
+.prow__track {
+  display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 3 * 28px) / 4); column-gap: 28px;
+  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 6px;
+}
+.prow__track::-webkit-scrollbar { display: none; }
+.prow__arrow {
+  position: absolute; top: calc((100% - 230px) / 2); transform: translateY(-50%); z-index: 3; border: 0; background: none;
+  color: var(--ink); padding: 10px 6px; opacity: .7; transition: opacity .2s;
+}
+.prow__arrow:hover { opacity: 1; }
+.prow__arrow--prev { left: clamp(-56px, -3.6vw, -8px); }
+.prow__arrow--next { right: clamp(-56px, -3.6vw, -8px); }
+
+.pcard { scroll-snap-align: start; display: flex; flex-direction: column; min-width: 0; }
+.pcard__img { position: relative; display: grid; place-items: center; aspect-ratio: 1; background: #fff; border-radius: 8px; overflow: hidden; }
+.pcard__img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 8% ; box-sizing: border-box; transition: transform .35s ease; }
+.pcard:hover .pcard__img img { transform: scale(1.04); }
+.pcard__img .mono { font-size: 6rem; }
+.pcard__img .out { position: absolute; inset: 0; background: rgba(255,255,255,.7); display: grid; place-items: center; font-weight: 800; color: var(--muted); }
+.pcard__badge { position: absolute; left: 12px; bottom: 12px; background: var(--red); color: #fff; font-weight: 800; font-size: .88rem; padding: 4px 11px; border-radius: 999px; }
+.pcard__badge--new { background: var(--pistachio); color: var(--ink); }
+.pcard__name { font-size: 1.06rem; font-weight: 600; letter-spacing: 0; margin: 16px 0 2px; color: var(--text); line-height: 1.3; }
+.pcard__name a:hover { text-decoration: underline; }
+.pcard__variant { color: var(--muted); font-size: .84rem; }
+.pcard__prices { margin-top: auto; padding-top: 12px; display: grid; gap: 2px; }
+.pcard__old { color: var(--muted); font-size: .95rem; min-height: 1.3em; }
+.pcard__now b { font-size: 1.45rem; font-weight: 800; color: var(--ink); letter-spacing: -.01em; }
+.pcard__now span { color: #2a7a3b; font-weight: 800; font-size: .98rem; }
+.pcard__other { color: var(--muted); font-size: .95rem; }
+.pcard__add {
+  margin-top: 16px; width: 100%; border: 0; border-radius: 8px; padding: 14px; background: var(--forest); color: #fff;
+  font: inherit; font-weight: 800; font-size: 1rem; transition: background .15s, transform .1s;
+}
+.pcard__add:hover { background: #2d5440; }
+.pcard__add:active { transform: translateY(1px); }
+.pcard__add[disabled] { background: #b9bdb3; cursor: not-allowed; }
+
+/* La sección de ofertas ya no va en recuadro */
+#rowOffers { margin-top: 12px; }
+
+/* Tablet: 3 por fila */
+@media (max-width: 1100px) { .prow__track { grid-auto-columns: calc((100% - 2 * 22px) / 3); column-gap: 22px; } }
+
+/* Celular: grilla de 2 columnas, sin flechas */
+@media (max-width: 640px) {
+  .prow { padding: 36px 16px 4px; }
+  .prow__arrow { display: none; }
+  .prow__track { grid-auto-flow: row; grid-template-columns: 1fr 1fr; grid-auto-columns: auto; gap: 18px 12px; overflow: visible; }
+  .pcard__name { font-size: .92rem; margin-top: 10px; }
+  .pcard__badge { left: 8px; bottom: 8px; font-size: .74rem; padding: 3px 8px; }
+  .pcard__now b { font-size: 1.12rem; }
+  .pcard__now span, .pcard__old, .pcard__other { font-size: .8rem; }
+  .pcard__add { padding: 11px; font-size: .9rem; margin-top: 10px; }
+  .prow__head-right { width: 100%; justify-content: space-between; }
+}
+
+/* Botón "Ver y pedir" de las filas del inicio (enlace a la ficha del producto) */
+.pcard__add { display: block; text-align: center; letter-spacing: .04em; text-transform: uppercase; font-size: .9rem; }
+@media (max-width: 640px) { .pcard__add { font-size: .78rem; } }

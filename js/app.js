@@ -594,6 +594,60 @@
     renderDots();
   }
 
+  /* ---------------- Filas de productos del inicio (a todo el ancho) ---------------- */
+  function rowCard(p) {
+    const off = offPct(p);
+    const out = p.stock <= 0;
+    const transfer = p.price * (1 - STORE.transferDiscount);
+    return `<article class="pcard">
+      <a class="pcard__img ${p.image ? "has-img" : ""}" href="#/producto/${p.id}" aria-label="${esc(p.name)}">
+        ${visual(p)}
+        ${off ? `<span class="pcard__badge">-${off}%</span>` : p.isNew ? `<span class="pcard__badge pcard__badge--new">Nuevo</span>` : ""}
+        ${out ? `<span class="out">Sin stock</span>` : ""}
+      </a>
+      <h3 class="pcard__name"><a href="#/producto/${p.id}">${esc(p.name)}</a></h3>
+      <span class="pcard__variant">${esc(p.variants[0].label)}</span>
+      <div class="pcard__prices">
+        <s class="pcard__old">${p.oldPrice ? money(p.oldPrice) : ""}</s>
+        <div class="pcard__now"><b>${money(transfer)}</b> <span>transferencia</span></div>
+        <div class="pcard__other">${money(p.price)} otros medios</div>
+      </div>
+      <a class="pcard__add" href="#/producto/${p.id}">Ver y pedir ›</a>
+    </article>`;
+  }
+
+  function rowSection({ id, eyebrow, eyebrowClass = "", title, link, extra = "", list }) {
+    return `<section class="prow" id="${id}">
+      <div class="prow__head">
+        <div><span class="eyebrow ${eyebrowClass}">${eyebrow}</span><h2>${title}</h2></div>
+        <div class="prow__head-right">${extra}${link}</div>
+      </div>
+      <div class="prow__wrap">
+        <button class="prow__arrow prow__arrow--prev" data-row="-1" aria-label="Anteriores"><svg width="36" height="16" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M42 10H3M11 2 3 10l8 8"/></svg></button>
+        <div class="prow__track">${list.map(rowCard).join("")}</div>
+        <button class="prow__arrow prow__arrow--next" data-row="1" aria-label="Siguientes"><svg width="36" height="16" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10h39M33 2l8 8-8 8"/></svg></button>
+      </div>
+    </section>`;
+  }
+
+  function initRows() {
+    $$(".prow").forEach((row) => {
+      const track = $(".prow__track", row);
+      const prev = $(".prow__arrow--prev", row), next = $(".prow__arrow--next", row);
+      const step = () => { const c = $(".pcard", track); return c ? c.offsetWidth + parseFloat(getComputedStyle(track).columnGap || 0) : 300; };
+      const update = () => {
+        const max = track.scrollWidth - track.clientWidth;
+        prev.hidden = track.scrollLeft <= 4;
+        next.hidden = track.scrollLeft >= max - 4;
+      };
+      prev.addEventListener("click", () => track.scrollBy({ left: -step(), behavior: reduceMotion ? "auto" : "smooth" }));
+      next.addEventListener("click", () => track.scrollBy({ left: step(), behavior: reduceMotion ? "auto" : "smooth" }));
+      track.addEventListener("scroll", () => requestAnimationFrame(update), { passive: true });
+      window.addEventListener("resize", update);
+      update();
+    });
+  }
+
   function viewHome() {
     renderCatbar(null);
     const off = offers();
@@ -613,30 +667,23 @@
         <div class="benefit"><span>${ICON.truck()}</span>Envíos a domicilio</div>
       </div>
 
-      <section class="section">
-        <div class="section__head">
-          <div><span class="eyebrow">Los favoritos de nuestros clientes</span><h2>Más vendidos</h2></div>
-          <a href="#/productos">Ver catálogo →</a>
-        </div>
-        <div class="grid">${masVendidos.slice(0, 8).map((p) => productCard(p)).join("")}</div>
-      </section>
+    </div>
 
-      <section class="section section--offers">
-        <div class="section__head">
-          <div><span class="eyebrow eyebrow--red">Selección especial · ${off.length} productos</span><h2>Ofertas de la semana</h2></div>
-          <div class="countdown countdown--inline" title="Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a las 23:59 (hora argentina)">
+    ${rowSection({ id: "rowBest", eyebrow: "Los favoritos de nuestros clientes", title: "Más vendidos",
+      link: `<a class="prow__link" href="#/productos">Ver catálogo →</a>`, list: masVendidos })}
+
+    ${rowSection({ id: "rowOffers", eyebrow: `Selección especial · ${off.length} productos`, eyebrowClass: "eyebrow--red", title: "Ofertas de la semana",
+      extra: `<div class="countdown countdown--inline" title="Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a las 23:59 (hora argentina)">
             <span class="countdown__title">Termina en</span>
             <div class="countdown__nums" id="countdown"></div>
-          </div>
-        </div>
-        <div class="grid">${off.slice(0, 8).map((p, i) => productCard(p, `Oferta ${i + 1} de ${off.length}`)).join("")}</div>
-        <div class="section__more"><a class="btn btn--ghost" href="#/ofertas">Ver todas las ofertas →</a></div>
-      </section>
+          </div>`,
+      link: `<a class="prow__link" href="#/ofertas">Ver todas →</a>`, list: off })}
 
+    <div class="container">
       ${reviewsHTML()}
-
     </div>`;
     initCarousel(nuevos.length);
+    initRows();
     initReviews();
     startCountdown();
   }
