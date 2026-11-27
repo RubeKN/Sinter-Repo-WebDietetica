@@ -848,7 +848,6 @@
                 <input id="gInput" value="${grams}" inputmode="numeric" aria-label="Gramos"><span class="qty__unit">g</span>
                 <button type="button" id="gPlus" aria-label="Más gramos">+</button>
               </div>
-              <span class="bulkbox__same" id="gSame" hidden></span>
             </div>
             <p class="bulkbox__hint">Mínimo ${Bulk.label(Bulk.min(p))}, de a ${Bulk.step(p)} g · ${money(Bulk.kgPrice(p))} el kg</p>
           </div>` : ""}
@@ -903,8 +902,6 @@
       const same = sameAs(grams);
       v = same;   // -1 si no coincide con ninguna
       $$("[data-v]").forEach((x) => x.classList.toggle("active", Number(x.dataset.v) === (same >= 0 ? same : -1)));
-      const note = $("#gSame"); note.hidden = same < 0;
-      if (same >= 0) note.textContent = `Es la presentación de ${p.variants[same].label}`;
       renderPrice();
     }
     if (bulk) {
