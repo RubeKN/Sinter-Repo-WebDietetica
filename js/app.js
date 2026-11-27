@@ -77,10 +77,20 @@
   const cart = {
     items: store.get("sinter_cart", []), // [{ id, v, qty }]
     save() { store.set("sinter_cart", this.items); renderCartUI(); },
+    // Unidades de stock que ocupa una presentación (1 kg = 4 paquetes de 250 g, etc.)
+    per(p, v) { return Math.max(1, Math.round(p.variants[v]?.mult || 1)); },
+    // Cuántas más se pueden agregar de esa presentación sin pasar el stock
+    room(p, v, exceptIdx = -1) {
+      const used = this.items.reduce((a, it, i) => i === exceptIdx || it.id !== p.id ? a : a + it.qty * this.per(p, it.v), 0);
+      return Math.max(0, Math.floor((p.stock - used) / this.per(p, v)));
+    },
     add(id, v = 0, qty = 1) {
       const p = productById(id);
       if (!p || p.stock <= 0) return;
       const found = this.items.find((i) => i.id === id && i.v === v);
+      const room = this.room(p, v);
+      if (room <= 0) return toast(`No hay más stock de ${p.name} (${p.variants[v].label})`);
+      if (qty > room) { qty = room; setTimeout(() => toast(`Solo quedan ${room} de ${p.name} (${p.variants[v].label}): agregamos ${room}`), 1700); }
       store.set("sinter_bar_min", false);   // al agregar algo, la barra vuelve a aparecer
       if (found) found.qty = Math.min(found.qty + qty, 99);
       else this.items.push({ id, v, qty });
@@ -90,6 +100,11 @@
       toast(`${p.name} (${p.variants[v].label}) agregado al pedido`);
     },
     setQty(idx, qty) {
+      const it = this.items[idx]; const p = productById(it?.id);
+      if (p && qty > 0) {
+        const max = it.qty + this.room(p, it.v);   // lo que ya tiene + lo que queda
+        if (qty > max) { qty = max; toast(`Solo quedan ${max} de ${p.name} (${p.variants[it.v].label})`); }
+      }
       if (qty <= 0) this.items.splice(idx, 1);
       else this.items[idx].qty = Math.min(qty, 99);
       this.save();

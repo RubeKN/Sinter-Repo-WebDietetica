@@ -23,6 +23,7 @@
      getCategories() / saveCategories(list)
      getReviews() / saveReviews(list)
      listOrders() / createOrder(o) / updateOrder(id, patch)
+     adjustStock(id, delta, reason, ref) / listStockLog(id?)
      login(email, pass) / logout() / currentUser()
      reset()                       -> restablece la demo
    ========================================================================= */
@@ -162,6 +163,19 @@
     listPriceHistory() { return ok(read().priceHistory || []); },
     addPriceHistory(entry) { const db = read(); db.priceHistory = [entry, ...(db.priceHistory || [])].slice(0, 20); write(db); return ok(entry); },
     removePriceHistory(id) { const db = read(); db.priceHistory = (db.priceHistory || []).filter((h) => h.id !== id); write(db); return ok(true); },
+
+    /* Stock: cada cambio queda registrado como movimiento */
+    adjustStock(id, delta, reason, ref) {
+      const db = read(); const p = db.products.find((x) => x.id === id);
+      if (!p) return ok(null);
+      const before = Number(p.stock) || 0; p.stock = Math.max(0, before + delta);
+      if (p.stock !== before) {
+        db.stockLog = [{ id: "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), productId: id,
+          delta: p.stock - before, reason, ref: ref || "", at: new Date().toISOString(), stock: p.stock }, ...(db.stockLog || [])].slice(0, 500);
+      }
+      write(db); return ok(p);
+    },
+    listStockLog(id) { const l = read().stockLog || []; return ok(id == null ? l : l.filter((m) => m.productId === id)); },
 
     /* Pedidos */
     listOrders() { return ok(read().orders); },

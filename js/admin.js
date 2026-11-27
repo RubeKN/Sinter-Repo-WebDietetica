@@ -387,7 +387,13 @@
       if (input.dataset.k === "visible") { p.paused = !input.checked; row.classList.toggle("is-paused", p.paused); }
       else {
         const v = Math.max(0, Math.round(Number(input.value) || 0));
-        input.value = v; p[input.dataset.k] = v;
+        input.value = v;
+        if (input.dataset.k === "stock") {
+          await DB.adjustStock(p.id, v - p.stock, "Ajuste manual"); p.stock = v;
+          input.closest("label").classList.add("saved"); setTimeout(() => input.closest("label")?.classList.remove("saved"), 900);
+          return toast("Stock actualizado");
+        }
+        p[input.dataset.k] = v;
       }
       await DB.saveProduct(p);
       input.closest("label").classList.add("saved"); setTimeout(() => input.closest("label")?.classList.remove("saved"), 900);
@@ -478,6 +484,13 @@
             <label class="toggle"><span><b>Novedad</b><small>Aparece en el carrusel del inicio</small></span><span class="switch"><input type="checkbox" name="isNew" ${d.isNew ? "checked" : ""}><span></span></span></label>
             <label class="toggle"><span><b>Destacado</b><small>Aparece en "Más vendidos"</small></span><span class="switch"><input type="checkbox" name="featured" ${d.featured ? "checked" : ""}><span></span></span></label>
           </section>
+          ${isNew ? "" : `<section class="card stock-card">
+            <h3 class="card__title">Stock</h3>
+            <div class="stock-now"><b id="stockNow">${d.stock}</b><span>unidades disponibles</span></div>
+            <div class="restock"><input type="number" min="1" step="1" id="restockN" placeholder="Cantidad" aria-label="Unidades a reponer"><button type="button" class="btn btn--ghost btn--sm" id="restockBtn">${icon("plus", 16)} Reponer</button></div>
+            <h4 class="mov-title">Últimos movimientos</h4>
+            <ul class="movs" id="movs"></ul>
+          </section>`}
           <section class="card preview-card">
             <h3 class="card__title">Así se ve en la tienda</h3>
             <div id="preview"></div>
@@ -560,6 +573,24 @@
       await DB.deleteProduct(d.id); toast("Producto eliminado"); location.hash = "#/productos";
     });
 
+    // Stock: reposición rápida y movimientos
+    const drawMovs = async () => {
+      if (isNew) return;
+      const log = (await DB.listStockLog(d.id)).slice(0, 6);
+      $("#movs").innerHTML = log.length ? log.map((m) => `<li><span class="mov__d ${m.delta > 0 ? "up" : "down"}">${m.delta > 0 ? "+" : "−"}${Math.abs(m.delta)}</span>
+        <span class="mov__r">${esc(m.reason)}${m.ref ? ` <a href="#/pedidos/${esc(m.ref)}">${esc(m.ref)}</a>` : ""}<small>${fmtDate(m.at)}</small></span><b>${m.stock}</b></li>`).join("")
+        : `<li class="muted small">Todavía no hay movimientos. Se registran al confirmar o cancelar pedidos y al reponer.</li>`;
+    };
+    if (!isNew) {
+      drawMovs();
+      $("#restockBtn").addEventListener("click", async () => {
+        const n = Math.round(Number($("#restockN").value) || 0); if (n <= 0) return toast("Poné cuántas unidades entraron");
+        const p = await DB.adjustStock(d.id, n, "Reposición");
+        found.stock = p.stock; d.stock = p.stock; f.stock.value = p.stock; $("#stockNow").textContent = p.stock; $("#restockN").value = "";
+        drawMovs(); toast(`Stock repuesto: +${n} u. (ahora ${p.stock})`);
+      });
+    }
+
     f.addEventListener("submit", async (e) => {
       e.preventDefault(); readForm();
       const errors = [];
@@ -570,7 +601,12 @@
       if (errors.length) { if (errors[0][0]) f[errors[0][0]].focus(); return toast(errors[0][1]); }
       d.variants = rows.map((r, i) => ({ label: r.label.trim(), mult: i === 0 ? 1 : Math.round((r.price / d.price) * 10000) / 10000 }));
       if (isNew) d.id = Math.max(0, ...products.map((x) => x.id)) + 1;
-      try { await DB.saveProduct(d); }
+      // Un cambio de stock a mano queda registrado como movimiento
+      const stockDelta = isNew ? 0 : d.stock - (Number(found.stock) || 0);
+      try {
+        if (stockDelta) { const want = d.stock; d.stock = found.stock; await DB.saveProduct(d); await DB.adjustStock(d.id, stockDelta, "Ajuste manual"); d.stock = want; }
+        else await DB.saveProduct(d);
+      }
       catch { return toast("No se pudo guardar (¿foto muy pesada?)"); }
       toast(isNew ? "Producto creado" : "Cambios guardados");
       location.hash = "#/productos";
@@ -740,11 +776,35 @@
   };
   const deliveryLabel = (o) => o.delivery === "retiro" ? "Retiro en local" : "Envío a domicilio";
 
+  // Stock: se descuenta al confirmar el pedido y se devuelve si se cancela o vuelve a "sin confirmar"
+  const ACTIVE = ["nuevo", "preparando", "listo", "entregado"];
+  const unitsOf = (it, products) => {
+    const p = products.find((x) => x.id === it.id);
+    const v = p?.variants?.find((x) => x.label === it.variant);
+    return it.qty * Math.max(1, Math.round(v?.mult || 1));
+  };
+  async function applyStock(o, to) {
+    const wants = ACTIVE.includes(to);
+    if (wants === !!o.stockApplied) return null;
+    const products = await DB.getProducts();
+    const sign = wants ? -1 : 1; let units = 0; const empty = [];
+    for (const it of o.items) {
+      const n = unitsOf(it, products); units += n;
+      const p = await DB.adjustStock(it.id, sign * n, wants ? "Pedido confirmado" : "Pedido cancelado", o.id);
+      if (wants && p && p.stock <= 0) empty.push(p.name);
+    }
+    return { units, back: !wants, empty, stockApplied: wants };
+  }
+  const stockMsg = (r) => !r ? "" : r.back ? ` · stock +${r.units} u. devuelto` : ` · stock −${r.units} u.${r.empty.length ? ` · Sin stock: ${r.empty.join(", ")}` : ""}`;
+
   async function setStatus(o, status, extra = {}) {
     const history = [...(o.history || firstHistory(o)), { status, at: new Date().toISOString(), ...extra }];
-    await DB.updateOrder(o.id, { status, history });
-    Object.assign(o, { status, history });
+    const r = await applyStock(o, status);
+    const patch = { status, history, ...(r ? { stockApplied: r.stockApplied } : {}) };
+    await DB.updateOrder(o.id, patch);
+    Object.assign(o, patch);
     refreshBadge();
+    return r;
   }
 
   async function refreshBadge() {
@@ -805,7 +865,7 @@
       if (b) {
         const o = orders.find((x) => x.id === b.dataset.next);
         const next = FLOW[FLOW.indexOf(o.status) + 1];
-        await setStatus(o, next); toast(`${o.id}: ${STATUS[next].label}`); renderOrders(); return;
+        const r = await setStatus(o, next); toast(`${o.id}: ${STATUS[next].label}${stockMsg(r)}`); renderOrders(); return;
       }
       const row = e.target.closest(".oitem");
       if (row && !e.target.closest("a, button")) location.hash = `#/pedidos/${row.dataset.id}`;
@@ -855,6 +915,8 @@
       <div class="odetail">
         <section class="card">
           <div class="card__head"><h3>Productos para armar</h3><span class="muted" id="packTxt"></span></div>
+          <p class="stocknote ${o.stockApplied ? "is-on" : ""}">${icon("box", 16)} ${o.stockApplied ? "Stock descontado al confirmar. Si cancelás el pedido, vuelve solo." : o.status === "sin_confirmar" ? "El stock se descuenta cuando confirmás el pedido." : o.status === "cancelado" ? "Este pedido no ocupa stock." : "Pedido anterior al control de stock: no descontó unidades."}</p>
+          ${o.status === "sin_confirmar" ? (() => { const short = o.items.filter((it) => { const p = imgOf(it); return p && p.stock < unitsOf(it, products); }); return short.length ? `<p class="stocknote is-warn">${icon("x", 16)} Stock insuficiente: ${short.map((it) => `${esc(it.name)} (quedan ${imgOf(it).stock})`).join(", ")}</p>` : ""; })() : ""}
           <ul class="pack" id="pack">${o.items.map((it, i) => { const p = imgOf(it); return `<li class="${packed.has(i) ? "ok" : ""}">
             <label><input type="checkbox" data-i="${i}" ${packed.has(i) ? "checked" : ""}><span class="pack__box">${icon("check", 14)}</span></label>
             <span class="pack__img">${p ? thumb(p) : ""}</span>
@@ -905,7 +967,7 @@
     $$("[data-set]").forEach((b) => b.addEventListener("click", async () => {
       const s = b.dataset.set;
       if (s === "cancelado" && !confirm(`¿Cancelar el pedido ${o.id}?`)) return;
-      await setStatus(o, s); toast(`${o.id}: ${STATUS[s].label}`); renderOrder(o.id);
+      const r = await setStatus(o, s); toast(`${o.id}: ${STATUS[s].label}${stockMsg(r)}`); renderOrder(o.id);
     }));
     let t; $("#note").addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(async () => { await DB.updateOrder(o.id, { internalNote: e.target.value }); toast("Nota guardada"); }, 600); });
     $("#printBtn").addEventListener("click", () => window.print());
