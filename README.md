@@ -69,7 +69,7 @@ Disponible en `/admin` (en local: `admin.html`).
 - Si se modifican los datos iniciales de `js/data.js`, subir `VERSION` en `js/db.js` para que la
   demo los vuelva a cargar.
 
-Etapas: 1) estructura, ingreso y resumen ✔ · 2) productos y aumento masivo de precios ·
+Etapas: 1) estructura, ingreso y resumen ✔ · 2) productos y aumento masivo de precios ✔ ·
 3) pedidos · 4) ofertas, portada, categorías, reseñas y configuración.
 
 ## Próximos pasos sugeridos

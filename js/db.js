@@ -17,7 +17,8 @@
 
    Interfaz (todos los métodos devuelven promesas):
      loadCatalog()                 -> { STORE, CATEGORIES, TAGS, PRODUCTS, REVIEWS }
-     getProducts() / saveProduct(p) / deleteProduct(id)
+     getProducts() / saveProduct(p) / saveProducts(list) / deleteProduct(id)
+     listPriceHistory() / addPriceHistory(e) / removePriceHistory(id)
      getStore() / saveStore(patch)
      getCategories() / saveCategories(list)
      getReviews() / saveReviews(list)
@@ -135,6 +136,7 @@
       else db.products.push({ ...p, id: p.id ?? Math.max(0, ...db.products.map((x) => x.id)) + 1 });
       write(db); return ok(p);
     },
+    saveProducts(list) { const db = read(); db.products = clone(list); write(db); return ok(list); },
     deleteProduct(id) { const db = read(); db.products = db.products.filter((p) => p.id !== id); write(db); return ok(true); },
 
     /* Tienda, categorías y reseñas */
@@ -144,6 +146,11 @@
     saveCategories(list) { const db = read(); db.categories = clone(list); write(db); return ok(list); },
     getReviews() { return ok(read().reviews); },
     saveReviews(list) { const db = read(); db.reviews = clone(list); write(db); return ok(list); },
+
+    /* Historial de cambios masivos de precios (para poder deshacer) */
+    listPriceHistory() { return ok(read().priceHistory || []); },
+    addPriceHistory(entry) { const db = read(); db.priceHistory = [entry, ...(db.priceHistory || [])].slice(0, 20); write(db); return ok(entry); },
+    removePriceHistory(id) { const db = read(); db.priceHistory = (db.priceHistory || []).filter((h) => h.id !== id); write(db); return ok(true); },
 
     /* Pedidos */
     listOrders() { return ok(read().orders); },

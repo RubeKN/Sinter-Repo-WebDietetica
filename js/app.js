@@ -2,7 +2,9 @@
   "use strict";
 
   // Los datos se leen siempre a través de la capa de datos (js/db.js)
-  const { STORE, CATEGORIES, TAGS, PRODUCTS, REVIEWS = [] } = await window.DB.loadCatalog();
+  const CATALOG = await window.DB.loadCatalog();
+  const { STORE, CATEGORIES, TAGS, REVIEWS = [] } = CATALOG;
+  const PRODUCTS = CATALOG.PRODUCTS.filter((p) => !p.paused);   // los pausados desde el panel no se muestran
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
   const app = $("#app");
