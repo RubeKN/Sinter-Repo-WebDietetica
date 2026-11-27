@@ -41,7 +41,7 @@
     { id: "productos", label: "Productos", ico: "box", ready: true, desc: "Crear, editar, duplicar y pausar productos. Fotos, presentaciones, etiquetas, stock y edición rápida de precios desde la lista." },
     { id: "precios", label: "Aumento de precios", ico: "trend", ready: true, desc: "Subí o bajá precios en bloque por porcentaje, a toda la tienda o por categoría, con vista previa y redondeo." },
     { id: "ofertas", label: "Ofertas", ico: "tag", stage: 4, desc: "Marcá productos en oferta, definí la fecha de fin de la promo semanal y el descuento por transferencia." },
-    { id: "pedidos", label: "Pedidos", ico: "bag", stage: 3, desc: "Todos los pedidos de la tienda con su estado (nuevo, preparando, listo, entregado), detalle para armar y contacto por WhatsApp." },
+    { id: "pedidos", label: "Pedidos", ico: "bag", ready: true, desc: "Todos los pedidos de la tienda con su estado (nuevo, preparando, listo, entregado), detalle para armar y contacto por WhatsApp." },
     { id: "categorias", label: "Categorías", ico: "grid", stage: 4, desc: "Creá, renombrá y ordená las categorías de la tienda." },
     { id: "portada", label: "Portada", ico: "image", stage: 4, desc: "Elegí qué productos aparecen en el carrusel de novedades y en qué orden." },
     { id: "resenas", label: "Reseñas", ico: "star", stage: 4, desc: "Cargá, ocultá y ordená los comentarios de clientes que se muestran en el inicio." },
@@ -88,6 +88,7 @@
     $("#sideNav").innerHTML = SECTIONS.map((s) =>
       `<a class="side__link" href="#/${s.id}" data-sec="${s.id}">${icon(s.ico)}<span>${s.label}</span>${s.ready ? "" : `<em>Pronto</em>`}</a>`).join("");
     paintIcons();
+    refreshBadge();
     route();
   }
 
@@ -111,6 +112,7 @@
     if (sec.id === "inicio") renderDashboard();
     else if (sec.id === "productos") parts[1] ? renderEditor(parts[1]) : renderProducts();
     else if (sec.id === "precios") renderPrices();
+    else if (sec.id === "pedidos") parts[1] ? renderOrder(decodeURIComponent(parts[1])) : renderOrders();
     else renderSoon(sec);
     view.scrollTop = 0; window.scrollTo(0, 0);
   }
@@ -195,8 +197,8 @@
           <div class="card__head"><h3>Pedidos recientes</h3><a class="link" href="#/pedidos">Ver todos ${icon("arrow", 14)}</a></div>
           <div class="table-wrap"><table class="tbl">
             <thead><tr><th>Pedido</th><th>Cliente</th><th class="col-date">Fecha</th><th class="num">Total</th><th>Estado</th></tr></thead>
-            <tbody>${orders.slice(0, 7).map((o) => `<tr>
-              <td><b>${esc(o.id)}</b></td><td>${esc(o.customer?.name)}</td>
+            <tbody>${orders.slice(0, 7).map((o) => `<tr class="row-link" onclick="location.hash='#/pedidos/${esc(o.id)}'">
+              <td><a href="#/pedidos/${esc(o.id)}"><b>${esc(o.id)}</b></a></td><td>${esc(o.customer?.name)}</td>
               <td class="muted col-date">${new Date(o.createdAt).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
               <td class="num">${money(o.total)}</td><td>${chip(o.status)}</td></tr>`).join("")}</tbody>
           </table></div>
@@ -671,6 +673,228 @@
       toast("Cambio deshecho: precios restaurados"); renderPrices();
     });
   }
+
+  /* =======================================================================
+     Pedidos
+     ======================================================================= */
+  PATHS.wa = '<path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.4-4.3a8.5 8.5 0 1 1 15.6-4.5z"/>';
+  PATHS.print = '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>';
+  PATHS.truck = '<path d="M2 6h11v10H2z"/><path d="M13 9h4l4 4v3h-8"/><circle cx="6" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/>';
+  PATHS.x = '<path d="M6 6l12 12M18 6L6 18"/>';
+  PATHS.user = '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>';
+
+  const FLOW = ["nuevo", "preparando", "listo", "entregado"];
+  const NEXT_LABEL = { nuevo: "Empezar a preparar", preparando: "Marcar como listo", listo: "Marcar como entregado" };
+  const oState = { status: "activos", q: "", range: "30", delivery: "" };
+  const fmtDate = (d, opt = { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) => new Date(d).toLocaleString("es-AR", opt);
+  const itemsCount = (o) => o.items.reduce((a, it) => a + it.qty, 0);
+  const waPhone = (phone) => { let n = String(phone || "").replace(/\D/g, ""); if (n.startsWith("0")) n = n.slice(1); if (!n.startsWith("54")) n = "549" + n; return n; };
+  const waMsg = (o, store) => {
+    const first = (o.customer?.name || "").split(" ")[0];
+    const shop = store.name || "la tienda";
+    const msgs = {
+      nuevo: `Hola ${first}! Recibimos tu pedido ${o.id} en ${shop}. En breve lo empezamos a preparar.`,
+      preparando: `Hola ${first}! Ya estamos preparando tu pedido ${o.id}.`,
+      listo: o.delivery === "retiro" ? `Hola ${first}! Tu pedido ${o.id} está listo para retirar.` : `Hola ${first}! Tu pedido ${o.id} está listo y sale para tu domicilio.`,
+      entregado: `Hola ${first}! Gracias por tu compra en ${shop}. ¡Que lo disfrutes!`,
+      cancelado: `Hola ${first}, te escribimos por tu pedido ${o.id}.`
+    };
+    return `https://wa.me/${waPhone(o.customer?.phone)}?text=${encodeURIComponent(msgs[o.status] || msgs.nuevo)}`;
+  };
+  const deliveryLabel = (o) => o.delivery === "retiro" ? "Retiro en local" : "Envío a domicilio";
+
+  async function setStatus(o, status) {
+    const history = [...(o.history || [{ status: "nuevo", at: o.createdAt }]), { status, at: new Date().toISOString() }];
+    await DB.updateOrder(o.id, { status, history });
+    Object.assign(o, { status, history });
+    refreshBadge();
+  }
+
+  async function refreshBadge() {
+    const orders = await DB.listOrders();
+    const n = orders.filter((o) => o.status === "nuevo").length;
+    const link = $('.side__link[data-sec="pedidos"]'); if (!link) return;
+    let b = $(".side__count", link);
+    if (!b) { b = document.createElement("b"); b.className = "side__count"; link.appendChild(b); }
+    b.textContent = n; b.hidden = !n;
+  }
+
+  async function renderOrders() {
+    const orders = await DB.listOrders();
+    const counts = { activos: 0, nuevo: 0, preparando: 0, listo: 0, entregado: 0, cancelado: 0, todos: orders.length };
+    orders.forEach((o) => { counts[o.status] = (counts[o.status] || 0) + 1; if (["nuevo", "preparando", "listo"].includes(o.status)) counts.activos++; });
+    const TABS = [["activos", "Para atender"], ["nuevo", "Nuevos"], ["preparando", "Preparando"], ["listo", "Listos"], ["entregado", "Entregados"], ["cancelado", "Cancelados"], ["todos", "Todos"]];
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Pedidos</h2><p class="muted">${counts.activos} para atender · ${counts.nuevo} nuevo${counts.nuevo === 1 ? "" : "s"}</p></div></div>
+      <div class="otabs" id="otabs">${TABS.map(([k, l]) => `<button type="button" data-t="${k}" class="${oState.status === k ? "on" : ""}">${l}<span>${counts[k] || 0}</span></button>`).join("")}</div>
+      <div class="filters">
+        <label class="searchbox">${icon("search", 18)}<input id="oq" type="text" placeholder="Buscar por número o cliente…" value="${esc(oState.q)}" autocomplete="off"></label>
+        <select id="orange" class="select">${[["1", "Hoy"], ["7", "Últimos 7 días"], ["30", "Últimos 30 días"], ["", "Todo"]].map(([v, l]) => `<option value="${v}" ${oState.range === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <select id="odel" class="select">${[["", "Envío y retiro"], ["envio", "Solo envíos"], ["retiro", "Solo retiros"]].map(([v, l]) => `<option value="${v}" ${oState.delivery === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+      </div>
+      <div class="card card--flush"><div id="olist"></div></div>`;
+
+    const draw = () => {
+      const q = oState.q.trim().toLowerCase();
+      const now = new Date(); const start = new Date(now); start.setHours(0, 0, 0, 0);
+      const minDate = oState.range ? new Date(start.getTime() - (Number(oState.range) - 1) * 86400000) : null;
+      const list = orders.filter((o) =>
+        (oState.status === "todos" || (oState.status === "activos" ? ["nuevo", "preparando", "listo"].includes(o.status) : o.status === oState.status)) &&
+        (!q || o.id.toLowerCase().includes(q) || (o.customer?.name || "").toLowerCase().includes(q)) &&
+        (!minDate || new Date(o.createdAt) >= minDate) &&
+        (!oState.delivery || o.delivery === oState.delivery));
+      const total = list.reduce((a, o) => a + o.total, 0);
+      $("#olist").innerHTML = list.length ? `
+        <div class="olist-head"><span>Pedido</span><span>Cliente</span><span>Entrega</span><span class="num">Total</span><span>Estado</span><span></span></div>
+        ${list.map((o) => `<div class="oitem" data-id="${esc(o.id)}">
+          <a class="oitem__id" href="#/pedidos/${esc(o.id)}"><b>${esc(o.id)}</b><small>${fmtDate(o.createdAt)}</small></a>
+          <div class="oitem__client"><b>${esc(o.customer?.name)}</b><small>${itemsCount(o)} producto${itemsCount(o) === 1 ? "" : "s"} · ${esc(o.pay || "")}</small></div>
+          <span class="oitem__del">${o.delivery === "retiro" ? icon("store", 16) : icon("truck", 16)} ${o.delivery === "retiro" ? "Retiro" : "Envío"}</span>
+          <b class="num">${money(o.total)}</b>
+          <span>${chip(o.status)}</span>
+          <div class="oitem__act">${NEXT_LABEL[o.status] ? `<button class="btn btn--ghost btn--sm" type="button" data-next="${esc(o.id)}">${NEXT_LABEL[o.status]}</button>` : `<a class="btn btn--ghost btn--sm" href="#/pedidos/${esc(o.id)}">Ver</a>`}</div>
+        </div>`).join("")}
+        <div class="olist-foot">${list.length} pedido${list.length === 1 ? "" : "s"} · ${money(total)}</div>`
+        : `<div class="empty">No hay pedidos con esos filtros.</div>`;
+    };
+    draw();
+    $("#otabs").addEventListener("click", (e) => { const b = e.target.closest("[data-t]"); if (!b) return; oState.status = b.dataset.t; $$("#otabs button").forEach((x) => x.classList.toggle("on", x === b)); draw(); });
+    $("#oq").addEventListener("input", (e) => { oState.q = e.target.value; draw(); });
+    $("#orange").addEventListener("change", (e) => { oState.range = e.target.value; draw(); });
+    $("#odel").addEventListener("change", (e) => { oState.delivery = e.target.value; draw(); });
+    $("#olist").addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-next]");
+      if (b) {
+        const o = orders.find((x) => x.id === b.dataset.next);
+        const next = FLOW[FLOW.indexOf(o.status) + 1];
+        await setStatus(o, next); toast(`${o.id}: ${STATUS[next].label}`); renderOrders(); return;
+      }
+      const row = e.target.closest(".oitem");
+      if (row && !e.target.closest("a, button")) location.hash = `#/pedidos/${row.dataset.id}`;
+    });
+  }
+
+  async function renderOrder(id) {
+    const [orders, store, products] = await Promise.all([DB.listOrders(), DB.getStore(), DB.getProducts()]);
+    const o = orders.find((x) => x.id === id);
+    if (!o) { view.innerHTML = `<div class="soon"><h2>Pedido no encontrado</h2><a class="btn btn--ghost" href="#/pedidos">Volver a pedidos</a></div>`; return; }
+    $("#pageTitle").textContent = `Pedido ${o.id}`;
+    const packed = new Set(o.packed || []);
+    const history = o.history || [{ status: "nuevo", at: o.createdAt }];
+    const reached = (s) => history.find((h) => h.status === s);
+    const idx = FLOW.indexOf(o.status);
+    const imgOf = (it) => products.find((p) => p.id === it.id);
+
+    view.innerHTML = `
+      <a class="back" href="#/pedidos">${icon("back", 16)} Pedidos</a>
+      <div class="ohead">
+        <div><h2>Pedido ${esc(o.id)} ${chip(o.status)}</h2><p class="muted">${fmtDate(o.createdAt, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}${o.demo ? " · pedido de demostración" : ""}</p></div>
+        <div class="ohead__actions">
+          <a class="btn btn--wa" href="${waMsg(o, store)}" target="_blank" rel="noopener">${icon("wa", 18)} WhatsApp al cliente</a>
+          <button class="btn btn--ghost" type="button" id="printBtn">${icon("print", 18)} Imprimir</button>
+        </div>
+      </div>
+
+      <section class="card steps-card">
+        <ol class="ostep">${FLOW.map((s, i) => { const h = reached(s); return `<li class="${o.status === "cancelado" ? "" : (i < idx || o.status === "entregado") ? "done" : i === idx ? "now" : ""}">
+          <span class="ostep__dot">${(i < idx || o.status === "entregado") && o.status !== "cancelado" ? icon("check", 14) : i + 1}</span><b>${STATUS[s].label}</b><small>${h ? fmtDate(h.at) : ""}</small></li>`; }).join("")}</ol>
+        <div class="ostep__actions">
+          ${o.status === "cancelado" ? `<span class="muted">Pedido cancelado${reached("cancelado") ? " el " + fmtDate(reached("cancelado").at) : ""}.</span><button class="btn btn--ghost btn--sm" type="button" data-set="nuevo">Reabrir pedido</button>`
+            : `${NEXT_LABEL[o.status] ? `<button class="btn btn--primary" type="button" data-set="${FLOW[idx + 1]}">${icon("check", 18)} ${NEXT_LABEL[o.status]}</button>` : `<span class="done-msg">${icon("check", 18)} Pedido entregado</span>`}
+               ${idx > 0 ? `<button class="btn btn--ghost btn--sm" type="button" data-set="${FLOW[idx - 1]}">Volver a "${STATUS[FLOW[idx - 1]].label}"</button>` : ""}
+               ${o.status !== "entregado" ? `<button class="btn btn--danger-ghost btn--sm" type="button" data-set="cancelado">${icon("x", 16)} Cancelar pedido</button>` : ""}`}
+        </div>
+      </section>
+
+      <div class="odetail">
+        <section class="card">
+          <div class="card__head"><h3>Productos para armar</h3><span class="muted" id="packTxt"></span></div>
+          <ul class="pack" id="pack">${o.items.map((it, i) => { const p = imgOf(it); return `<li class="${packed.has(i) ? "ok" : ""}">
+            <label><input type="checkbox" data-i="${i}" ${packed.has(i) ? "checked" : ""}><span class="pack__box">${icon("check", 14)}</span></label>
+            <span class="pack__img">${p ? thumb(p) : ""}</span>
+            <div class="pack__info"><b>${it.qty} × ${esc(it.name)}</b><small>${esc(it.variant)} · ${money(it.unit)} c/u</small></div>
+            <b class="num">${money(it.unit * it.qty)}</b></li>`; }).join("")}</ul>
+          <div class="totals">
+            <div><span>Subtotal</span><span>${money(o.subtotal)}</span></div>
+            ${o.discount ? `<div class="green"><span>Descuento transferencia</span><span>−${money(o.discount)}</span></div>` : ""}
+            <div><span>Envío</span><span>${o.shipping ? money(o.shipping) : "Gratis"}</span></div>
+            <div class="total"><span>Total</span><span>${money(o.total)}</span></div>
+          </div>
+        </section>
+
+        <div class="odetail__side">
+          <section class="card">
+            <h3 class="card__title">${icon("user", 18)} Cliente</h3>
+            <p class="kv"><span>Nombre</span><b>${esc(o.customer?.name)}</b></p>
+            <p class="kv"><span>Teléfono</span><b>${esc(o.customer?.phone)}</b></p>
+          </section>
+          <section class="card">
+            <h3 class="card__title">${o.delivery === "retiro" ? icon("store", 18) : icon("truck", 18)} ${deliveryLabel(o)}</h3>
+            ${o.delivery === "envio" ? `<p class="kv"><span>Dirección</span><b>${esc(o.customer?.address || "Sin dirección cargada")}</b></p>${o.customer?.ref ? `<p class="kv"><span>Referencia</span><b>${esc(o.customer.ref)}</b></p>` : ""}`
+              : `<p class="muted">El cliente pasa a retirar por el local.</p>`}
+            <p class="kv"><span>Pago</span><b>${esc(o.pay || "—")}</b></p>
+            ${o.notes ? `<p class="kv"><span>Notas del cliente</span><b>${esc(o.notes)}</b></p>` : ""}
+          </section>
+          <section class="card">
+            <h3 class="card__title">Nota interna</h3>
+            <textarea class="note" id="note" rows="3" placeholder="Solo la ve tu equipo. Ej: falta stock de chía, avisar.">${esc(o.internalNote || "")}</textarea>
+          </section>
+        </div>
+      </div>
+
+      ${printSlip(o, store)}`;
+
+    const updPack = () => {
+      const n = $$("#pack input:checked").length;
+      $("#packTxt").textContent = `${n} de ${o.items.length} listos`;
+    };
+    updPack();
+    $("#pack").addEventListener("change", async (e) => {
+      const cb = e.target.closest("input[data-i]"); if (!cb) return;
+      cb.closest("li").classList.toggle("ok", cb.checked);
+      const list = $$("#pack input:checked").map((x) => Number(x.dataset.i));
+      await DB.updateOrder(o.id, { packed: list }); updPack();
+      if (list.length === o.items.length && o.status === "preparando") toast("Todo armado: podés marcarlo como listo");
+    });
+    $$("[data-set]").forEach((b) => b.addEventListener("click", async () => {
+      const s = b.dataset.set;
+      if (s === "cancelado" && !confirm(`¿Cancelar el pedido ${o.id}?`)) return;
+      await setStatus(o, s); toast(`${o.id}: ${STATUS[s].label}`); renderOrder(o.id);
+    }));
+    let t; $("#note").addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(async () => { await DB.updateOrder(o.id, { internalNote: e.target.value }); toast("Nota guardada"); }, 600); });
+    $("#printBtn").addEventListener("click", () => window.print());
+  }
+
+  // Remito para imprimir (solo visible al imprimir)
+  function printSlip(o, store) {
+    return `<div class="slip" aria-hidden="true">
+      <div class="slip__head"><div><b>${esc(store.name || "Tienda")}</b><span>${esc(store.address || "")}</span></div><div class="slip__id">Pedido ${esc(o.id)}<span>${fmtDate(o.createdAt)}</span></div></div>
+      <div class="slip__cols">
+        <div><small>Cliente</small><b>${esc(o.customer?.name)}</b><span>${esc(o.customer?.phone)}</span></div>
+        <div><small>${deliveryLabel(o)}</small><b>${o.delivery === "envio" ? esc(o.customer?.address || "—") : "Retira en el local"}</b><span>${esc(o.customer?.ref || "")}</span></div>
+        <div><small>Pago</small><b>${esc(o.pay || "—")}</b></div>
+      </div>
+      <table><thead><tr><th></th><th>Cant.</th><th>Producto</th><th>Presentación</th><th class="num">Subtotal</th></tr></thead>
+      <tbody>${o.items.map((it) => `<tr><td><span class="slip__box"></span></td><td>${it.qty}</td><td>${esc(it.name)}</td><td>${esc(it.variant)}</td><td class="num">${money(it.unit * it.qty)}</td></tr>`).join("")}</tbody></table>
+      <div class="slip__tot"><span>Subtotal ${money(o.subtotal)}</span>${o.discount ? `<span>Descuento −${money(o.discount)}</span>` : ""}<span>Envío ${o.shipping ? money(o.shipping) : "gratis"}</span><b>Total ${money(o.total)}</b></div>
+      ${o.notes ? `<p><small>Notas:</small> ${esc(o.notes)}</p>` : ""}
+    </div>`;
+  }
+
+  // Pedidos nuevos desde la tienda (otra pestaña): se actualiza solo
+  let lastNew = null;
+  window.addEventListener("storage", async (e) => {
+    if (e.key !== "sinter_demo_db" || $("#shell").hidden) return;
+    const orders = await DB.listOrders();
+    const newest = orders[0]?.id;
+    if (lastNew && newest && newest !== lastNew && orders[0].status === "nuevo" && !orders[0].demo) toast(`Nuevo pedido ${newest} de ${orders[0].customer?.name || "un cliente"}`);
+    lastNew = newest;
+    refreshBadge();
+    const sec = location.hash.replace(/^#\/?/, "").split("/");
+    if (sec[0] === "pedidos" && !sec[1]) renderOrders();
+    if (!sec[0] || sec[0] === "inicio") renderDashboard();
+  });
+  DB.listOrders().then((o) => { lastNew = o[0]?.id; });
 
   /* ---------- Arranque ---------- */
   start();
