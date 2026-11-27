@@ -297,7 +297,7 @@
      Utilidades de productos
      ======================================================================= */
   const round10 = (n) => Math.round(n / 10) * 10;
-  const vPrice = (p, v = 0) => round10(p.price * (p.variants?.[v]?.mult ?? 1));
+  const vPrice = (p, v = 0) => Bulk.unit(p, v);
   const offPct = (p) => (p.oldPrice && p.oldPrice > p.price ? Math.round((1 - p.price / p.oldPrice) * 100) : 0);
   const thumb = (p, cls = "") => p.image
     ? `<img class="${cls}" src="${esc(p.image)}" alt="" loading="lazy">`
@@ -427,7 +427,13 @@
       ? { name: "", cat: cats[0]?.id || "", desc: "", price: 0, oldPrice: null, stock: 0, tags: [], image: "", paused: false, isNew: true, featured: false, variants: [{ label: "250 g", mult: 1 }] }
       : JSON.parse(JSON.stringify(found));
     // Presentaciones con precio propio (en los datos se guardan como multiplicador del precio base)
-    let rows = (d.variants || [{ label: "Unidad", mult: 1 }]).map((v, i) => ({ label: v.label, price: i === 0 ? d.price : round10(d.price * v.mult) }));
+    let rows = (d.variants || [{ label: "Unidad", mult: 1 }]).map((v, i) => ({ label: v.label, price: i === 0 ? d.price : Bulk.unit(d, i) }));
+    // Productos sueltos: el precio se carga por kg y las presentaciones se calculan solas
+    const catBulk = (catId) => !!cats.find((c) => c.id === catId)?.bulk;
+    let kgMode = !!(d.bulk ?? catBulk(d.cat));
+    const g0 = () => Bulk.grams(rows[0]?.label);
+    const kgStart = d.perKg ? d.kgPrice : (g0() && d.price ? round10(d.price * 1000 / g0()) : 0);
+    const kgOldStart = d.perKg ? d.kgOld : (g0() && d.oldPrice ? round10(d.oldPrice * 1000 / g0()) : 0);
     $("#pageTitle").textContent = isNew ? "Nuevo producto" : "Editar producto";
 
     view.innerHTML = `
@@ -458,15 +464,15 @@
           <section class="card">
             <h3 class="card__title">Precio</h3>
             <div class="f-row">
-              <label class="f">Precio<span class="money"><i>$</i><input name="price" type="number" min="0" step="10" value="${d.price || ""}" placeholder="0" required></span></label>
-              <label class="f">Precio anterior <small>(si está en oferta)</small><span class="money"><i>$</i><input name="oldPrice" type="number" min="0" step="10" value="${d.oldPrice || ""}" placeholder="Opcional"></span></label>
+              <label class="f"><span id="lblPrice">${kgMode ? "Precio por kg" : "Precio"}</span><span class="money"><i>$</i><input name="price" type="number" min="0" step="10" value="${(kgMode ? kgStart : d.price) || ""}" placeholder="0" required></span></label>
+              <label class="f"><span id="lblOld">${kgMode ? "Precio anterior por kg" : "Precio anterior"}</span> <small>(si está en oferta)</small><span class="money"><i>$</i><input name="oldPrice" type="number" min="0" step="10" value="${(kgMode ? kgOldStart : d.oldPrice) || ""}" placeholder="Opcional"></span></label>
             </div>
             <p class="hint" id="priceHint"></p>
           </section>
 
           <section class="card">
             <h3 class="card__title">Presentaciones</h3>
-            <p class="muted small">La primera usa el precio de arriba. Agregá otras (por ejemplo 500 g o 1 kg) con su propio precio.</p>
+            <p class="muted small" id="vhelp"></p>
             <div id="vrows" class="vrows"></div>
             <button type="button" class="btn btn--ghost btn--sm" id="vadd">${icon("plus", 16)} Agregar presentación</button>
           </section>
@@ -477,13 +483,13 @@
             <div class="f-row">
               <label class="f">¿Se vende suelto?<select name="bulk" class="select">
                 <option value="" ${d.bulk == null ? "selected" : ""} id="bulkInherit"></option>
-                <option value="1" ${d.bulk === true ? "selected" : ""}>Sí, siempre</option>
-                <option value="0" ${d.bulk === false ? "selected" : ""}>No, solo presentaciones</option></select></label>
+                <option value="1" ${d.bulk === true ? "selected" : ""}>Sí</option>
+                <option value="0" ${d.bulk === false ? "selected" : ""}>No</option></select></label>
               <label class="f bulk-f">Mínimo que puede pedir<select name="bulkMin" class="select">${[50, 100, 150, 200, 250, 300, 500, 1000].map((g) => `<option value="${g}" ${Bulk.min(d) === g ? "selected" : ""}>${Bulk.label(g)}</option>`).join("")}</select></label>
             </div>
             <div class="f-row bulk-f">
               <label class="f">Sube de a<select name="bulkStep" class="select">${[10, 25, 50, 100, 250].map((g) => `<option value="${g}" ${Bulk.step(d) === g ? "selected" : ""}>${g} g</option>`).join("")}</select></label>
-              <label class="f">Precio por kg <small>(vacío = automático)</small><span class="money"><i>$</i><input name="kgPrice" type="number" min="0" step="10" value="${d.kgPrice || ""}" placeholder=""></span></label>
+              <span></span>
             </div>
             <p class="hint" id="bulkHint"></p>
           </section>
@@ -523,34 +529,61 @@
     const f = $("#pform");
     const readForm = () => {
       d.name = f.name.value.trim(); d.cat = f.cat.value; d.desc = f.desc.value.trim();
-      d.price = Math.max(0, Math.round(Number(f.price.value) || 0));
-      const old = Math.round(Number(f.oldPrice.value) || 0); d.oldPrice = old > 0 ? old : null;
+      const main = Math.max(0, Math.round(Number(f.price.value) || 0));
+      const old = Math.round(Number(f.oldPrice.value) || 0);
+      if (kgMode) {
+        d.perKg = true; d.kgPrice = main; d.kgOld = old > 0 ? old : null;
+        const g = g0(); d.price = g ? round10(main * g / 1000) : 0; d.oldPrice = g && old > 0 ? round10(old * g / 1000) : null;
+      } else { d.perKg = false; d.kgPrice = null; d.kgOld = null; d.price = main; d.oldPrice = old > 0 ? old : null; }
       d.stock = Math.max(0, Math.round(Number(f.stock.value) || 0));
       d.tags = $$("input[name=tag]:checked", f).map((x) => x.value);
       d.paused = !f.visible.checked; d.isNew = f.isNew.checked; d.featured = f.featured.checked;
       d.bulk = f.bulk.value === "" ? null : f.bulk.value === "1";
       d.bulkMin = Number(f.bulkMin.value); d.bulkStep = Number(f.bulkStep.value);
-      d.kgPrice = Math.round(Number(f.kgPrice.value) || 0) || null;
       rows[0].price = d.price;
+    };
+    // Cambio de modo (suelto <-> por unidad): convierte los precios para no perder lo cargado
+    const setMode = () => {
+      const on = !!((f.bulk.value === "" ? null : f.bulk.value === "1") ?? catBulk(f.cat.value));
+      if (on === kgMode) return;
+      const g = g0(); const p = Number(f.price.value) || 0, o = Number(f.oldPrice.value) || 0;
+      if (on && !g) { toast("Para venderlo suelto, la primera presentación tiene que estar en g o kg"); }
+      if (on && g) { f.price.value = p ? round10(p * 1000 / g) : ""; f.oldPrice.value = o ? round10(o * 1000 / g) : ""; }
+      if (!on && kgMode) {
+        rows = rows.map((r) => ({ ...r, price: Bulk.grams(r.label) ? round10(p * Bulk.grams(r.label) / 1000) : r.price }));
+        f.price.value = g ? round10(p * g / 1000) : ""; f.oldPrice.value = g && o ? round10(o * g / 1000) : "";
+      }
+      kgMode = on && !!g;
+      $("#lblPrice").textContent = kgMode ? "Precio por kg" : "Precio";
+      $("#lblOld").textContent = kgMode ? "Precio anterior por kg" : "Precio anterior";
+      readForm(); drawRows();
     };
     // Venta suelta: textos según la categoría y ejemplo de precio
     const drawBulk = () => {
       const cat = cats.find((c) => c.id === f.cat.value);
       $("#bulkInherit").textContent = `Según la categoría (${cat?.bulk ? "sí" : "no"})`;
-      const auto = Bulk.autoKg(d.price, rows.map((r, i) => ({ label: r.label, mult: i === 0 ? 1 : (d.price ? r.price / d.price : 1) })));
-      f.kgPrice.placeholder = auto ? `${auto} (automático)` : "Poné el precio por kg";
-      const kg = d.kgPrice || auto;
-      const on = (d.bulk ?? !!cat?.bulk);
+      const kg = kgMode ? d.kgPrice : 0;
+      const on = kgMode;
       $$(".bulk-f", f).forEach((x) => x.classList.toggle("is-off", !on));
       const ex = Math.max(d.bulkMin, 350 - (350 % d.bulkStep));
       $("#bulkHint").innerHTML = !on ? "El cliente solo puede elegir las presentaciones."
-        : !kg ? `<span class="warn">Poné el precio por kg (no se pudo calcular de las presentaciones).</span>`
-        : `El cliente pide desde <b>${Bulk.label(d.bulkMin)}</b>, de a ${d.bulkStep} g, a <b>${money(kg)} el kg</b>. Ej: ${Bulk.label(ex)} = ${money(Math.round(kg * ex / 10000) * 10)}.${d.kgPrice ? "" : " Precio por kg calculado de la presentación más grande."}`;
+        : !kg ? `<span class="warn">Poné el precio por kg en la sección Precio.</span>`
+        : `El cliente pide desde <b>${Bulk.label(d.bulkMin)}</b>, de a ${d.bulkStep} g, con el precio por kg de arriba (<b>${money(kg)}</b>). Ej: ${Bulk.label(ex)} = ${money(round10(kg * ex / 1000))}.`;
     };
+    // Precio calculado de una presentación en modo por kg
+    const calcHTML = (r) => {
+      const g = Bulk.grams(r.label);
+      if (!g) return `<span class="vcalc vcalc--warn">Poné g o kg</span>`;
+      const now = round10((d.kgPrice || 0) * g / 1000), old = d.kgOld ? round10(d.kgOld * g / 1000) : 0;
+      return `<span class="vcalc">${old > now ? `<s>${money(old)}</s>` : ""}<b>${money(now)}</b></span>`;
+    };
+    const drawCalc = () => { if (kgMode) $$(".vrow").forEach((row) => { row.querySelector(".vcalc").outerHTML = calcHTML(rows[Number(row.dataset.i)]); }); };
     const drawRows = () => {
+      $("#vhelp").textContent = kgMode ? "Los precios se calculan solos con el precio por kg (y el precio anterior, si está en oferta). Escribí el peso: 250 g, 500 g, 1 kg…"
+        : "La primera usa el precio de arriba. Agregá otras (por ejemplo 500 g o 1 kg) con su propio precio.";
       $("#vrows").innerHTML = rows.map((r, i) => `<div class="vrow" data-i="${i}">
         <input class="vlabel" value="${esc(r.label)}" placeholder="Ej: 500 g" aria-label="Presentación">
-        <span class="money"><i>$</i><input class="vprice" type="number" min="0" step="10" value="${i === 0 ? d.price || "" : r.price || ""}" ${i === 0 ? "disabled title='Usa el precio principal'" : ""} aria-label="Precio"></span>
+        ${kgMode ? calcHTML(r) : `<span class="money"><i>$</i><input class="vprice" type="number" min="0" step="10" value="${i === 0 ? d.price || "" : r.price || ""}" ${i === 0 ? "disabled title='Usa el precio principal'" : ""} aria-label="Precio"></span>`}
         ${i === 0 ? `<span class="vtag">Principal</span>` : `<button type="button" class="icon-btn icon-btn--danger" data-vdel="${i}" aria-label="Quitar">${icon("trash", 16)}</button>`}
       </div>`).join("");
     };
@@ -568,11 +601,19 @@
         ${d.paused ? `<span class="pv__paused">Pausado: no se muestra en la tienda</span>` : ""}
       </div>`;
       const hint = $("#priceHint");
+      if (kgMode) {
+        const kOff = d.kgOld && d.kgOld > d.kgPrice ? Math.round((1 - d.kgPrice / d.kgOld) * 100) : 0;
+        hint.innerHTML = d.kgOld && d.kgOld <= d.kgPrice ? `<span class="warn">El precio anterior tiene que ser mayor al precio actual para mostrarse como oferta.</span>`
+          : d.kgPrice ? `${kOff ? `En oferta: <b>${kOff}% OFF</b> (antes ${money(d.kgOld)} el kg). ` : ""}${esc(rows[0]?.label || "")}: <b>${money(d.price)}</b>${kOff ? ` (antes ${money(d.oldPrice)})` : ""}. Con transferencia: <b>${money(transfer)}</b>.` : "";
+        return;
+      }
       hint.innerHTML = off ? `En oferta: <b>${off}% OFF</b> (antes ${money(d.oldPrice)}). Con transferencia: <b>${money(transfer)}</b>.`
         : d.oldPrice && d.oldPrice <= d.price ? `<span class="warn">El precio anterior tiene que ser mayor al precio actual para mostrarse como oferta.</span>`
         : d.price ? `Con transferencia (${Math.round((store.transferDiscount || 0) * 100)}% OFF): <b>${money(transfer)}</b>.` : "";
     };
     drawRows(); readForm(); drawPreview(); drawBulk();
+    f.bulk.addEventListener("change", setMode);
+    f.cat.addEventListener("change", setMode);
 
     f.addEventListener("input", (e) => {
       if (e.target.closest(".vrow")) {
@@ -580,11 +621,11 @@
         if (e.target.classList.contains("vlabel")) rows[i].label = e.target.value;
         if (e.target.classList.contains("vprice")) rows[i].price = Math.round(Number(e.target.value) || 0);
       }
-      readForm(); drawPreview(); drawBulk();
+      readForm(); drawPreview(); drawBulk(); drawCalc();
       if (e.target.name === "price") { const first = $(".vrow[data-i='0'] .vprice"); if (first) first.value = d.price || ""; }
     });
     f.addEventListener("change", () => { readForm(); drawPreview(); drawBulk(); });
-    $("#vadd").addEventListener("click", () => { rows.push({ label: "", price: d.price ? round10(d.price * 1.9) : 0 }); drawRows(); $(`.vrow[data-i='${rows.length - 1}'] .vlabel`).focus(); });
+    $("#vadd").addEventListener("click", () => { rows.push({ label: "", price: d.price ? round10(d.price * 2) : 0 }); drawRows(); $(`.vrow[data-i='${rows.length - 1}'] .vlabel`).focus(); });
     $("#vrows").addEventListener("click", (e) => { const b = e.target.closest("[data-vdel]"); if (!b) return; rows.splice(Number(b.dataset.vdel), 1); drawRows(); drawPreview(); });
 
     // Foto: se reduce a 800 px y se guarda optimizada
@@ -631,9 +672,13 @@
       if (!d.name) errors.push(["name", "Poné un nombre"]);
       if (!d.price) errors.push(["price", "Poné un precio"]);
       if (rows.some((r) => !r.label.trim())) errors.push([null, "Completá el nombre de cada presentación"]);
-      if (rows.slice(1).some((r) => !r.price)) errors.push([null, "Poné el precio de cada presentación"]);
+      if (!kgMode && rows.slice(1).some((r) => !r.price)) errors.push([null, "Poné el precio de cada presentación"]);
+      if (kgMode && rows.some((r) => !Bulk.grams(r.label))) errors.push([null, "Escribí cada presentación en g o kg (ej: 500 g)"]);
       if (errors.length) { if (errors[0][0]) f[errors[0][0]].focus(); return toast(errors[0][1]); }
-      d.variants = rows.map((r, i) => ({ label: r.label.trim(), mult: i === 0 ? 1 : Math.round((r.price / d.price) * 10000) / 10000 }));
+      d.variants = kgMode
+        ? rows.map((r) => ({ label: r.label.trim(), mult: Math.round(Bulk.grams(r.label) / g0() * 10000) / 10000 }))
+        : rows.map((r, i) => ({ label: r.label.trim(), mult: i === 0 ? 1 : Math.round((r.price / d.price) * 10000) / 10000 }));
+      if (!kgMode) { delete d.kgPrice; delete d.kgOld; }
       if (isNew) d.id = Math.max(0, ...products.map((x) => x.id)) + 1;
       // Un cambio de stock a mano queda registrado como movimiento
       const stockDelta = isNew ? 0 : d.stock - (Number(found.stock) || 0);
@@ -743,7 +788,7 @@
       const list = affected();
       const label = `${pr.dir === "up" ? "Aumento" : "Baja"} de ${pr.pct}% — ${pr.scope === "todas" ? "toda la tienda" : pr.cats.map(catName).join(", ")}`;
       if (!confirm(`${label}\nSe van a actualizar ${list.length} productos. ¿Aplicar?`)) return;
-      const before = list.map((p) => ({ id: p.id, price: p.price, oldPrice: p.oldPrice ?? null }));
+      const before = list.map((p) => ({ id: p.id, price: p.price, oldPrice: p.oldPrice ?? null, kgPrice: p.kgPrice ?? null, kgOld: p.kgOld ?? null }));
       const ids = new Set(list.map((p) => p.id));
       const updated = products.map((p) => ids.has(p.id) ? { ...p, price: newPrice(p), oldPrice: newOld(p) } : p);
       await DB.saveProducts(updated);
@@ -755,7 +800,7 @@
       const h = history.find((x) => x.id === e.currentTarget.dataset.undo);
       if (!h || !confirm(`¿Deshacer "${h.desc}"? Los ${h.before.length} productos vuelven a su precio anterior.`)) return;
       const map = new Map(h.before.map((b) => [b.id, b]));
-      const restored = (await DB.getProducts()).map((p) => map.has(p.id) ? { ...p, price: map.get(p.id).price, oldPrice: map.get(p.id).oldPrice } : p);
+      const restored = (await DB.getProducts()).map((p) => { const h = map.get(p.id); if (!h) return p; return { ...p, price: h.price, oldPrice: h.oldPrice, ...(p.perKg && h.kgPrice ? { kgPrice: h.kgPrice, kgOld: h.kgOld } : {}) }; });
       await DB.saveProducts(restored); await DB.removePriceHistory(h.id);
       toast("Cambio deshecho: precios restaurados"); renderPrices();
     });

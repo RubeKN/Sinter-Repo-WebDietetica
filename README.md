@@ -78,8 +78,9 @@ dirección, horarios y envíos). La tienda toma esos datos al recargar.
 ## Venta suelta (por peso)
 
 - En **Categorías** cada categoría se marca como *Suelto* o no (frutos secos, semillas, mixes, frutas deshidratadas, harinas y legumbres vienen activadas).
-- En la ficha de cada producto, la tarjeta **Venta suelta** permite: seguir lo que diga la categoría, forzar *Sí* o *No*, elegir el **mínimo** de gramos, de a cuánto sube y el **precio por kg** (si se deja vacío se calcula de la presentación más grande).
-- En la tienda aparece la opción *Suelto: elegí los gramos*; el carrito, el mensaje de WhatsApp y el pedido muestran los gramos. El stock se descuenta en paquetes de la primera presentación.
+- En la ficha de cada producto, la tarjeta **Venta suelta** permite seguir lo que diga la categoría o elegir *Sí* / *No*, el **mínimo** de gramos y de a cuánto sube.
+- Si el producto se vende suelto, en **Precio** se carga el **precio por kg** (y el precio anterior por kg si está en oferta). Las presentaciones (250 g, 500 g, 1 kg…) y la venta suelta se calculan solas con ese precio, así siempre son coherentes. Aumentos masivos y ofertas también actualizan el precio por kg.
+- En la tienda aparece la opción *Suelto: elegí los gramos*. Si el cliente pone un peso que ya es una presentación (ej. 250 g), queda elegida esa presentación. El carrito, el mensaje de WhatsApp y el pedido muestran los gramos. El stock se descuenta en paquetes de la primera presentación.
 
 ## Próximos pasos sugeridos
 

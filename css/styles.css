@@ -1361,3 +1361,5 @@ html { font-size: 16px; }
 .bulkbox__quick button:hover { border-color: var(--green); }
 .bulkbox__quick button.on { border-color: var(--green); background: var(--green-soft); color: var(--green-dark); }
 .bulkbox__hint { margin: 0.5rem 0 0; font-size: .84rem; color: var(--muted); }
+.bulkbox__same { font-size: .84rem; font-weight: 700; color: var(--green-dark); background: var(--green-soft); padding: 0.375rem 0.625rem; border-radius: 0.25rem; }
+.bulkbox__same[hidden] { display: none; }

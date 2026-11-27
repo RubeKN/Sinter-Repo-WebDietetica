@@ -31,7 +31,7 @@
   "use strict";
 
   const KEY = "sinter_demo_db";
-  const VERSION = 2;   // 2: categorías y productos con venta suelta (por peso)
+  const VERSION = 3;   // 2: venta suelta (por peso) · 3: precio por kg en productos sueltos
   const SESSION = "sinter_admin_session";
   // Credenciales de la DEMO (se muestran en la pantalla de ingreso).
   const DEMO_USER = { email: "demo@sinter.com", pass: "demo1234", name: "Administrador" };
@@ -105,7 +105,7 @@
 
   /* ---------- Estado de la demo ---------- */
   function seed() {
-    const products = clone(window.PRODUCTS || []);
+    const products = clone(window.PRODUCTS || []).map((p) => toPerKg(p, window.CATEGORIES || []));
     return {
       version: VERSION,
       store: clone(window.STORE || {}),
@@ -119,10 +119,41 @@
 
   // Actualiza datos guardados de versiones anteriores sin perder lo cargado
   function migrate(saved) {
-    if (!saved || saved.version !== 1) return saved;
-    const seedCats = window.CATEGORIES || [];
-    saved.categories = (saved.categories || []).map((c) => ("bulk" in c ? c : { ...c, bulk: !!seedCats.find((x) => x.id === c.id)?.bulk }));
-    saved.version = 2; ls.set(KEY, saved); return saved;
+    if (!saved || !saved.version || saved.version >= VERSION) return saved;
+    if (saved.version === 1) {
+      const seedCats = window.CATEGORIES || [];
+      saved.categories = (saved.categories || []).map((c) => ("bulk" in c ? c : { ...c, bulk: !!seedCats.find((x) => x.id === c.id)?.bulk }));
+      saved.version = 2;
+    }
+    if (saved.version === 2) {
+      saved.products = (saved.products || []).map((p) => toPerKg(p, saved.categories));
+      saved.version = 3;
+    }
+    ls.set(KEY, saved); return saved;
+  }
+
+  // Productos sueltos: el precio se carga por kg y cada presentación se calcula sola.
+  // Pasa un producto al esquema por kg manteniendo el precio de la presentación principal.
+  function toPerKg(p, cats) {
+    if (p.perKg !== undefined) return p;
+    const on = p.bulk ?? !!(cats || []).find((c) => c.id === p.cat)?.bulk;
+    const gs = (p.variants || []).map((v) => Bulk.grams(v.label));
+    if (!on || !gs.length || gs.some((g) => !g)) return p;
+    const g0 = gs[0];
+    const out = { ...p, perKg: true, kgPrice: round10(p.price * 1000 / g0), kgOld: p.oldPrice ? round10(p.oldPrice * 1000 / g0) : null,
+      variants: p.variants.map((v, i) => ({ ...v, mult: Math.round(gs[i] / g0 * 10000) / 10000 })) };
+    return Bulk.derive(out);
+  }
+  // Mantiene coherentes precio por kg y precio principal cuando otra herramienta cambia el precio
+  // (aumento masivo, ofertas, edición rápida): se respeta lo que haya cambiado.
+  function syncPerKg(p, prev) {
+    if (!p.perKg || !Bulk.grams(p.variants?.[0]?.label)) return p;
+    if (prev && prev.perKg) {
+      const known = new Map([[prev.price, prev.kgPrice], [prev.oldPrice, prev.kgOld]]);
+      if (p.price !== prev.price && p.kgPrice === prev.kgPrice) p.kgPrice = known.get(p.price) ?? round10(prev.kgPrice * p.price / prev.price);
+      if (p.oldPrice !== prev.oldPrice && p.kgOld === prev.kgOld) p.kgOld = p.oldPrice ? (known.get(p.oldPrice) ?? round10(p.oldPrice * 1000 / Bulk.grams(p.variants[0].label))) : null;
+    }
+    return Bulk.derive(p);
   }
 
   let memory = null;   // copia en memoria (si el navegador no permite guardar)
@@ -151,11 +182,14 @@
     saveProduct(p) {
       const db = read();
       const i = db.products.findIndex((x) => x.id === p.id);
-      if (i >= 0) db.products[i] = { ...db.products[i], ...p };
-      else db.products.push({ ...p, id: p.id ?? Math.max(0, ...db.products.map((x) => x.id)) + 1 });
-      write(db); return ok(p);
+      if (i >= 0) db.products[i] = syncPerKg({ ...db.products[i], ...clone(p) }, db.products[i]);
+      else db.products.push(syncPerKg({ ...clone(p), id: p.id ?? Math.max(0, ...db.products.map((x) => x.id)) + 1 }));
+      write(db); return ok(i >= 0 ? db.products[i] : db.products[db.products.length - 1]);
     },
-    saveProducts(list) { const db = read(); db.products = clone(list); write(db); return ok(list); },
+    saveProducts(list) {
+      const db = read(); const prev = new Map(db.products.map((x) => [x.id, x]));
+      db.products = clone(list).map((p) => syncPerKg(p, prev.get(p.id))); write(db); return ok(db.products);
+    },
     deleteProduct(id) { const db = read(); db.products = db.products.filter((p) => p.id !== id); write(db); return ok(true); },
 
     /* Tienda, categorías y reseñas */
@@ -229,7 +263,22 @@
       (variants || []).forEach((v) => { const gr = Bulk.grams(v.label); if (gr > g) { g = gr; kg = price * (v.mult ?? 1) * 1000 / gr; } });
       return g ? round10(kg) : 0;
     },
-    kgPrice(p) { return Number(p.kgPrice) || Bulk.autoKg(p.price, p.variants); },
+    kgPrice(p) { return p.perKg ? Number(p.kgPrice) || 0 : Bulk.autoKg(p.price, p.variants); },
+    // Precio de una presentación: por kg si el producto es suelto, si no precio × multiplicador
+    unit(p, v = 0, old = false) {
+      const g = p.perKg ? Bulk.grams(p.variants?.[v]?.label) : 0;
+      if (g) { const kg = old ? p.kgOld : p.kgPrice; return kg ? round10(kg * g / 1000) : null; }
+      const base = old ? p.oldPrice : p.price;
+      return base ? round10(base * (p.variants?.[v]?.mult ?? 1)) : (old ? null : 0);
+    },
+    // Recalcula el precio principal (primera presentación) desde el precio por kg
+    derive(p) {
+      const g0 = Bulk.grams(p.variants?.[0]?.label);
+      if (!p.perKg || !g0) return p;
+      p.price = round10((p.kgPrice || 0) * g0 / 1000);
+      p.oldPrice = p.kgOld ? round10(p.kgOld * g0 / 1000) : null;
+      return p;
+    },
     catOn(p, cats) { return !!(cats || []).find((c) => c.id === p.cat)?.bulk; },
     enabled(p, cats) { return !!(p.bulk ?? Bulk.catOn(p, cats)) && Bulk.kgPrice(p) > 0; },
     min(p) { return Number(p.bulkMin) || 100; },
@@ -237,7 +286,11 @@
     base(p) { return Bulk.grams(p.variants?.[0]?.label) || 250; },   // gramos de una unidad de stock
     price(p, g, old = false) {
       let kg = Bulk.kgPrice(p);
-      if (old) { if (!p.oldPrice || !p.price) return null; kg = kg * p.oldPrice / p.price; }
+      if (old) {
+        if (p.perKg) kg = p.kgOld;
+        else kg = p.oldPrice && p.price ? kg * p.oldPrice / p.price : 0;
+        if (!kg) return null;
+      }
       return round10(kg * g / 1000);
     },
     label(g) { return g >= 1000 ? `${(g / 1000).toLocaleString("es-AR", { maximumFractionDigits: 3 })} kg` : `${g} g`; }

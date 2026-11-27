@@ -17,8 +17,9 @@
   const catById = (id) => CATEGORIES.find((c) => c.id === id);
   const productById = (id) => PRODUCTS.find((p) => p.id === Number(id));
   const round10 = (n) => Math.round(n / 10) * 10;
-  const variantPrice = (p, vi = 0) => round10(p.price * (p.variants[vi]?.mult ?? 1));
-  const variantOld = (p, vi = 0) => (p.oldPrice ? round10(p.oldPrice * (p.variants[vi]?.mult ?? 1)) : null);
+  // Si el producto es suelto, cada presentación sale del precio por kg (ver Bulk en db.js)
+  const variantPrice = (p, vi = 0) => window.Bulk.unit(p, vi);
+  const variantOld = (p, vi = 0) => window.Bulk.unit(p, vi, true);
   const offPct = (p) => (p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0);
   const isOffer = (p) => Boolean(p.oldPrice);
   const offers = () => PRODUCTS.filter(isOffer);
@@ -822,7 +823,9 @@
     let qty = 1;
     const out = p.stock <= 0;
     const bulk = isBulk(p);
-    let grams = Math.max(Bulk.min(p), Math.ceil(250 / Bulk.step(p)) * Bulk.step(p));
+    let grams = Bulk.min(p);
+    let gramMode = false;   // true: se está eligiendo por gramos
+    const sameAs = (g) => p.variants.findIndex((x) => Bulk.grams(x.label) === g);
 
     app.innerHTML = `
     <div class="container"><div class="page">
@@ -845,7 +848,7 @@
                 <input id="gInput" value="${grams}" inputmode="numeric" aria-label="Gramos"><span class="qty__unit">g</span>
                 <button type="button" id="gPlus" aria-label="Más gramos">+</button>
               </div>
-              <div class="bulkbox__quick">${[250, 500, 1000].filter((n) => n >= Bulk.min(p)).map((n) => `<button type="button" data-g-set="${n}">${Bulk.label(n)}</button>`).join("")}</div>
+              <span class="bulkbox__same" id="gSame" hidden></span>
             </div>
             <p class="bulkbox__hint">Mínimo ${Bulk.label(Bulk.min(p))}, de a ${Bulk.step(p)} g · ${money(Bulk.kgPrice(p))} el kg</p>
           </div>` : ""}
@@ -887,28 +890,33 @@
 
     $$("[data-v]").forEach((b) => b.addEventListener("click", () => {
       v = Number(b.dataset.v);
+      gramMode = v === -1;
       $$("[data-v]").forEach((x) => x.classList.toggle("active", x === b));
-      if (bulk) { $("#bulkBox").hidden = v !== -1; $(".pdp__buy .qty").hidden = v === -1; }
-      renderPrice();
+      if (bulk) { $("#bulkBox").hidden = !gramMode; $(".pdp__buy .qty").hidden = gramMode; }
+      if (gramMode) setG(grams); else renderPrice();
     }));
+    // Gramos: si coinciden con una presentación (ej. 250 g), queda elegida esa presentación
+    function setG(n) {
+      const st = Bulk.step(p);
+      grams = Math.max(Bulk.min(p), Math.min(99000, Math.round((n || 0) / st) * st));
+      $("#gInput").value = grams;
+      const same = sameAs(grams);
+      v = same;   // -1 si no coincide con ninguna
+      $$("[data-v]").forEach((x) => x.classList.toggle("active", Number(x.dataset.v) === (same >= 0 ? same : -1)));
+      const note = $("#gSame"); note.hidden = same < 0;
+      if (same >= 0) note.textContent = `Es la presentación de ${p.variants[same].label}`;
+      renderPrice();
+    }
     if (bulk) {
-      const setG = (n) => {
-        const st = Bulk.step(p);
-        grams = Math.max(Bulk.min(p), Math.min(99000, Math.round((n || 0) / st) * st));
-        $("#gInput").value = grams;
-        $$("[data-g-set]").forEach((x) => x.classList.toggle("on", Number(x.dataset.gSet) === grams));
-        renderPrice();
-      };
       $("#gMinus").addEventListener("click", () => setG(grams - Bulk.step(p)));
       $("#gPlus").addEventListener("click", () => setG(grams + Bulk.step(p)));
       $("#gInput").addEventListener("change", (e) => setG(parseInt(e.target.value, 10)));
-      $$("[data-g-set]").forEach((x) => x.addEventListener("click", () => setG(Number(x.dataset.gSet))));
-      setG(grams);
+      $("#gInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); setG(parseInt(e.target.value, 10)); } });
     }
     $("#qMinus").addEventListener("click", () => setQty(qty - 1));
     $("#qPlus").addEventListener("click", () => setQty(qty + 1));
     $("#qInput").addEventListener("change", (e) => setQty(parseInt(e.target.value, 10)));
-    $("#addBtn").addEventListener("click", () => v === -1 ? cart.addGrams(p.id, grams) : cart.add(p.id, v, qty));
+    $("#addBtn").addEventListener("click", () => gramMode ? (v >= 0 ? cart.add(p.id, v, 1) : cart.addGrams(p.id, grams)) : cart.add(p.id, v, qty));
     renderPrice();
   }
 
