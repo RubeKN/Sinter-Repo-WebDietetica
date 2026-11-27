@@ -31,7 +31,7 @@
   "use strict";
 
   const KEY = "sinter_demo_db";
-  const VERSION = 1;
+  const VERSION = 2;   // 2: categorías y productos con venta suelta (por peso)
   const SESSION = "sinter_admin_session";
   // Credenciales de la DEMO (se muestran en la pantalla de ingreso).
   const DEMO_USER = { email: "demo@sinter.com", pass: "demo1234", name: "Administrador" };
@@ -117,10 +117,18 @@
     };
   }
 
+  // Actualiza datos guardados de versiones anteriores sin perder lo cargado
+  function migrate(saved) {
+    if (!saved || saved.version !== 1) return saved;
+    const seedCats = window.CATEGORIES || [];
+    saved.categories = (saved.categories || []).map((c) => ("bulk" in c ? c : { ...c, bulk: !!seedCats.find((x) => x.id === c.id)?.bulk }));
+    saved.version = 2; ls.set(KEY, saved); return saved;
+  }
+
   let memory = null;   // copia en memoria (si el navegador no permite guardar)
   function read() {
     if (memory) return memory;
-    const saved = ls.get(KEY);
+    const saved = migrate(ls.get(KEY));
     memory = saved && saved.version === VERSION ? saved : seed();
     if (!saved || saved.version !== VERSION) ls.set(KEY, memory);
     return memory;
@@ -206,4 +214,33 @@
   };
 
   window.DB = DemoAdapter;
+
+  /* ---------- Venta suelta (por peso) ----------
+     Un producto se vende suelto si lo dice el producto (bulk: true/false) o,
+     si no lo define, su categoría. El cliente elige los gramos desde un mínimo. */
+  const Bulk = {
+    grams(label) {
+      const m = String(label || "").toLowerCase().replace(",", ".").match(/([\d.]+)\s*(kg|g)\b/);
+      return m ? Math.round(parseFloat(m[1]) * (m[2] === "kg" ? 1000 : 1)) : 0;
+    },
+    // Precio por kg sugerido: el de la presentación más grande (la más conveniente)
+    autoKg(price, variants) {
+      let g = 0, kg = 0;
+      (variants || []).forEach((v) => { const gr = Bulk.grams(v.label); if (gr > g) { g = gr; kg = price * (v.mult ?? 1) * 1000 / gr; } });
+      return g ? round10(kg) : 0;
+    },
+    kgPrice(p) { return Number(p.kgPrice) || Bulk.autoKg(p.price, p.variants); },
+    catOn(p, cats) { return !!(cats || []).find((c) => c.id === p.cat)?.bulk; },
+    enabled(p, cats) { return !!(p.bulk ?? Bulk.catOn(p, cats)) && Bulk.kgPrice(p) > 0; },
+    min(p) { return Number(p.bulkMin) || 100; },
+    step(p) { return Number(p.bulkStep) || 50; },
+    base(p) { return Bulk.grams(p.variants?.[0]?.label) || 250; },   // gramos de una unidad de stock
+    price(p, g, old = false) {
+      let kg = Bulk.kgPrice(p);
+      if (old) { if (!p.oldPrice || !p.price) return null; kg = kg * p.oldPrice / p.price; }
+      return round10(kg * g / 1000);
+    },
+    label(g) { return g >= 1000 ? `${(g / 1000).toLocaleString("es-AR", { maximumFractionDigits: 3 })} kg` : `${g} g`; }
+  };
+  window.Bulk = Bulk;
 })();

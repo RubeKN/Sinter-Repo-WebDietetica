@@ -637,3 +637,15 @@ html { font-size: 16px; }
 @media (min-width: 1024px) {
   html { font-size: clamp(14px, min(1.1111vw, 1.7778vh), 22px); }
 }
+
+/* Venta suelta (por peso) */
+.bulk-f.is-off { opacity: .45; pointer-events: none; }
+.cats li { grid-template-columns: 2.5rem minmax(0, 1fr) 6.875rem auto auto; }
+.cats__bulk { display: inline-flex; align-items: center; gap: 0.4375rem; font-size: .84rem; font-weight: 700; color: var(--ink); cursor: pointer; white-space: nowrap; user-select: none; }
+.cats__bulk input { width: 1.0625rem; height: 1.0625rem; accent-color: var(--forest); margin: 0; }
+.cats__help { margin: 0.25rem 0 0.75rem; }
+@media (max-width: 760px) {
+  .cats li { grid-template-columns: 2.25rem minmax(0, 1fr) auto; }
+  .cats__bulk { grid-column: 2; grid-row: 3; }
+  .cats .slides__act { grid-row: 1 / span 3; }
+}

@@ -73,6 +73,13 @@
 
   const waLink = (text = "") => `https://wa.me/${STORE.whatsapp}${text ? "?text=" + encodeURIComponent(text) : ""}`;
 
+  /* ---------------- Venta suelta ---------------- */
+  const Bulk = window.Bulk;
+  const isBulk = (p) => Bulk.enabled(p, CATEGORIES);
+  // Precio y nombre de una línea: presentación (v >= 0) o gramos sueltos (v = -1)
+  const linePrice = (p, it) => it.v === -1 ? Bulk.price(p, it.g) : variantPrice(p, it.v);
+  const lineLabel = (p, it) => it.v === -1 ? `${Bulk.label(it.g)} suelto` : p.variants[it.v]?.label || "";
+
   /* ---------------- Carrito ---------------- */
   const cart = {
     items: store.get("sinter_cart", []), // [{ id, v, qty }]
@@ -80,9 +87,38 @@
     // Unidades de stock que ocupa una presentación (1 kg = 4 paquetes de 250 g, etc.)
     per(p, v) { return Math.max(1, Math.round(p.variants[v]?.mult || 1)); },
     // Cuántas más se pueden agregar de esa presentación sin pasar el stock
+    // Unidades de stock que ocupa una línea (los gramos sueltos se cuentan en paquetes de la primera presentación)
+    units(p, it) { return it.v === -1 ? it.g / Bulk.base(p) : it.qty * this.per(p, it.v); },
+    used(p, exceptIdx = -1) { return this.items.reduce((a, it, i) => i === exceptIdx || it.id !== p.id ? a : a + this.units(p, it), 0); },
     room(p, v, exceptIdx = -1) {
-      const used = this.items.reduce((a, it, i) => i === exceptIdx || it.id !== p.id ? a : a + it.qty * this.per(p, it.v), 0);
-      return Math.max(0, Math.floor((p.stock - used) / this.per(p, v)));
+      return Math.max(0, Math.floor((p.stock - this.used(p, exceptIdx) + 1e-9) / this.per(p, v)));
+    },
+    // Gramos sueltos que todavía se pueden pedir
+    roomG(p, exceptIdx = -1) {
+      const step = Bulk.step(p);
+      return Math.max(0, Math.floor(((p.stock - this.used(p, exceptIdx)) * Bulk.base(p) + 1e-6) / step) * step);
+    },
+    addGrams(id, g) {
+      const p = productById(id); if (!p || p.stock <= 0) return;
+      const idx = this.items.findIndex((i) => i.id === id && i.v === -1);
+      const have = idx >= 0 ? this.items[idx].g : 0;
+      const max = this.roomG(p, idx);   // gramos totales permitidos para esta línea
+      const total = Math.min(have + g, max);
+      if (total < Bulk.min(p) || total <= have) return toast(`No hay más stock de ${p.name}`);
+      if (total < have + g) setTimeout(() => toast(`Solo quedan ${Bulk.label(max)} de ${p.name}: agregamos ${Bulk.label(total - have)}`), 1700);
+      store.set("sinter_bar_min", false);
+      if (idx >= 0) this.items[idx].g = total; else this.items.push({ id, v: -1, g: total, qty: 1 });
+      this.save();
+      const btn = $("#cartBtn");
+      btn.classList.remove("bump"); void btn.offsetWidth; btn.classList.add("bump");
+      toast(`${p.name} (${Bulk.label(total - have)} suelto) agregado al pedido`);
+    },
+    setGrams(idx, g) {
+      const it = this.items[idx]; const p = productById(it?.id); if (!p) return;
+      const max = this.roomG(p, idx), min = Bulk.min(p);
+      if (g > max) { g = max; toast(`Solo quedan ${Bulk.label(max)} de ${p.name}`); }
+      it.g = Math.max(min, g);
+      this.save();
     },
     add(id, v = 0, qty = 1) {
       const p = productById(id);
@@ -101,6 +137,7 @@
     },
     setQty(idx, qty) {
       const it = this.items[idx]; const p = productById(it?.id);
+      if (it?.v === -1 && qty > 0) return;
       if (p && qty > 0) {
         const max = it.qty + this.room(p, it.v);   // lo que ya tiene + lo que queda
         if (qty > max) { qty = max; toast(`Solo quedan ${max} de ${p.name} (${p.variants[it.v].label})`); }
@@ -114,7 +151,7 @@
       return this.items
         .map((i) => ({ ...i, p: productById(i.id) }))
         .filter((l) => l.p)
-        .map((l) => ({ ...l, unit: variantPrice(l.p, l.v), total: variantPrice(l.p, l.v) * l.qty }));
+        .map((l) => ({ ...l, label: lineLabel(l.p, l), unit: linePrice(l.p, l), total: linePrice(l.p, l) * l.qty }));
     },
     count() { return this.items.reduce((a, i) => a + i.qty, 0); },
     subtotal() { return this.lines().reduce((a, l) => a + l.total, 0); }
@@ -166,12 +203,17 @@
         <a href="#/producto/${l.p.id}" data-close>${ph(l.p)}</a>
         <div>
           <div class="line__name">${esc(l.p.name)}</div>
-          <div class="line__meta">${esc(l.p.variants[l.v].label)} · ${money(l.unit)} c/u</div>
+          ${l.v === -1 ? `<div class="line__meta">Suelto · ${money(Bulk.kgPrice(l.p))} el kg</div>
+          <div class="qty qty--sm qty--g" style="margin-top:6px">
+            <button data-g="${idx}" data-d="-1" aria-label="Menos gramos">−</button>
+            <input value="${l.g}" data-g-input="${idx}" inputmode="numeric" aria-label="Gramos"><span class="qty__unit">g</span>
+            <button data-g="${idx}" data-d="1" aria-label="Más gramos">+</button>
+          </div>` : `<div class="line__meta">${esc(l.label)} · ${money(l.unit)} c/u</div>
           <div class="qty qty--sm" style="margin-top:6px">
             <button data-qty="${idx}" data-d="-1" aria-label="Restar">−</button>
             <input value="${l.qty}" data-qty-input="${idx}" inputmode="numeric" aria-label="Cantidad">
             <button data-qty="${idx}" data-d="1" aria-label="Sumar">+</button>
-          </div>
+          </div>`}
         </div>
         <div class="line__right">
           <span>${money(l.total)}</span>
@@ -779,6 +821,8 @@
     let v = 0;
     let qty = 1;
     const out = p.stock <= 0;
+    const bulk = isBulk(p);
+    let grams = Math.max(Bulk.min(p), Math.ceil(250 / Bulk.step(p)) * Bulk.step(p));
 
     app.innerHTML = `
     <div class="container"><div class="page">
@@ -792,7 +836,19 @@
           <div id="pdpPrice"></div>
           <p class="pdp__desc">${esc(p.desc)}</p>
           <div class="label">Presentación</div>
-          <div class="variants">${p.variants.map((x, i) => `<button class="variant ${i === 0 ? "active" : ""}" data-v="${i}">${esc(x.label)}</button>`).join("")}</div>
+          <div class="variants">${p.variants.map((x, i) => `<button class="variant ${i === 0 ? "active" : ""}" data-v="${i}">${esc(x.label)}</button>`).join("")}${bulk ? `<button class="variant variant--bulk" data-v="-1">Suelto: elegí los gramos</button>` : ""}</div>
+          ${bulk ? `<div class="bulkbox" id="bulkBox" hidden>
+            <div class="label">¿Cuánto querés?</div>
+            <div class="bulkbox__row">
+              <div class="qty qty--g">
+                <button type="button" id="gMinus" aria-label="Menos gramos">−</button>
+                <input id="gInput" value="${grams}" inputmode="numeric" aria-label="Gramos"><span class="qty__unit">g</span>
+                <button type="button" id="gPlus" aria-label="Más gramos">+</button>
+              </div>
+              <div class="bulkbox__quick">${[250, 500, 1000].filter((n) => n >= Bulk.min(p)).map((n) => `<button type="button" data-g-set="${n}">${Bulk.label(n)}</button>`).join("")}</div>
+            </div>
+            <p class="bulkbox__hint">Mínimo ${Bulk.label(Bulk.min(p))}, de a ${Bulk.step(p)} g · ${money(Bulk.kgPrice(p))} el kg</p>
+          </div>` : ""}
           ${out ? `<p class="stock-low">Sin stock por el momento. Consultanos por WhatsApp.</p>`
                 : p.stock < 20 ? `<p class="stock-low">¡Quedan pocas unidades!</p>` : ""}
           <div class="pdp__buy">
@@ -818,8 +874,8 @@
     </div></div>`;
 
     const renderPrice = () => {
-      const now = variantPrice(p, v);
-      const old = variantOld(p, v);
+      const now = v === -1 ? Bulk.price(p, grams) : variantPrice(p, v);
+      const old = v === -1 ? Bulk.price(p, grams, true) : variantOld(p, v);
       $("#pdpPrice").innerHTML = `
         <div class="price-top" style="justify-content:flex-start;gap:10px">
           ${old ? `<span class="off">${offPct(p)}% OFF</span><span class="old" style="margin:0">${money(old)}</span>` : ""}
@@ -832,12 +888,27 @@
     $$("[data-v]").forEach((b) => b.addEventListener("click", () => {
       v = Number(b.dataset.v);
       $$("[data-v]").forEach((x) => x.classList.toggle("active", x === b));
+      if (bulk) { $("#bulkBox").hidden = v !== -1; $(".pdp__buy .qty").hidden = v === -1; }
       renderPrice();
     }));
+    if (bulk) {
+      const setG = (n) => {
+        const st = Bulk.step(p);
+        grams = Math.max(Bulk.min(p), Math.min(99000, Math.round((n || 0) / st) * st));
+        $("#gInput").value = grams;
+        $$("[data-g-set]").forEach((x) => x.classList.toggle("on", Number(x.dataset.gSet) === grams));
+        renderPrice();
+      };
+      $("#gMinus").addEventListener("click", () => setG(grams - Bulk.step(p)));
+      $("#gPlus").addEventListener("click", () => setG(grams + Bulk.step(p)));
+      $("#gInput").addEventListener("change", (e) => setG(parseInt(e.target.value, 10)));
+      $$("[data-g-set]").forEach((x) => x.addEventListener("click", () => setG(Number(x.dataset.gSet))));
+      setG(grams);
+    }
     $("#qMinus").addEventListener("click", () => setQty(qty - 1));
     $("#qPlus").addEventListener("click", () => setQty(qty + 1));
     $("#qInput").addEventListener("change", (e) => setQty(parseInt(e.target.value, 10)));
-    $("#addBtn").addEventListener("click", () => cart.add(p.id, v, qty));
+    $("#addBtn").addEventListener("click", () => v === -1 ? cart.addGrams(p.id, grams) : cart.add(p.id, v, qty));
     renderPrice();
   }
 
@@ -888,7 +959,7 @@
 
         <div class="panel">
           <h3>Resumen</h3>
-          ${lines.map((l) => `<div class="summary-line"><span>${l.qty}× ${esc(l.p.name)} <small>(${esc(l.p.variants[l.v].label)})</small></span><b>${money(l.total)}</b></div>`).join("")}
+          ${lines.map((l) => `<div class="summary-line"><span>${l.v === -1 ? "" : `${l.qty}× `}${esc(l.p.name)} <small>(${esc(l.label)})</small></span><b>${money(l.total)}</b></div>`).join("")}
           <div id="totals" style="margin-top:12px;display:grid;gap:6px"></div>
           <button class="btn btn--wa btn--block" style="margin-top:16px">Enviar pedido por WhatsApp</button>
           <p style="font-size:.8rem;color:var(--muted);text-align:center">Confirmamos stock y coordinamos la entrega por WhatsApp.</p>
@@ -936,7 +1007,7 @@
       const msg = [
         `*Nuevo pedido ${orderId}*`,
         "",
-        ...cart.lines().map((l) => `• ${l.qty}x ${l.p.name} (${l.p.variants[l.v].label}) — ${money(l.total)}`),
+        ...cart.lines().map((l) => l.v === -1 ? `• ${Bulk.label(l.g)} de ${l.p.name} (suelto) — ${money(l.total)}` : `• ${l.qty}x ${l.p.name} (${l.label}) — ${money(l.total)}`),
         "",
         `Subtotal: ${money(t.sub)}`,
         t.disc ? `Desc. transferencia: -${money(t.disc)}` : null,
@@ -954,7 +1025,7 @@
         id: orderId,
         customer: { name: data.name, phone: data.phone, address: t.delivery === "envio" ? data.address : "", ref: data.ref || "" },
         delivery: t.delivery, pay: data.pay, notes: data.notes || "",
-        items: cart.lines().map((l) => ({ id: l.p.id, name: l.p.name, variant: l.p.variants[l.v].label, qty: l.qty, unit: l.unit })),
+        items: cart.lines().map((l) => ({ id: l.p.id, name: l.p.name, variant: l.label, qty: l.qty, unit: l.unit, ...(l.v === -1 ? { grams: l.g } : {}) })),
         subtotal: t.sub, discount: Math.round(t.disc), shipping: t.ship, total: Math.round(t.total)
       }).catch(() => {});
 
@@ -1240,6 +1311,8 @@
 
     // Delegación de eventos del carrito
     document.addEventListener("click", (e) => {
+      const g = e.target.closest("[data-g]");
+      if (g) { const i = Number(g.dataset.g); const it = cart.items[i]; const p = productById(it.id); cart.setGrams(i, it.g + Number(g.dataset.d) * Bulk.step(p)); return; }
       const t = e.target.closest("[data-close],[data-qty],[data-remove]");
       if (!t) return;
       if (t.matches("[data-close]")) closeDrawers();
@@ -1250,6 +1323,8 @@
       if (t.matches("[data-remove]")) cart.setQty(Number(t.dataset.remove), 0);
     });
     document.addEventListener("change", (e) => {
+      const gi = e.target.closest("[data-g-input]");
+      if (gi) { const i = Number(gi.dataset.gInput); const p = productById(cart.items[i].id); const st = Bulk.step(p); cart.setGrams(i, Math.round((parseInt(gi.value, 10) || 0) / st) * st); return; }
       const t = e.target.closest("[data-qty-input]");
       if (t) cart.setQty(Number(t.dataset.qtyInput), parseInt(t.value, 10) || 0);
     });

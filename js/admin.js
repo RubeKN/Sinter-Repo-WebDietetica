@@ -471,6 +471,23 @@
             <button type="button" class="btn btn--ghost btn--sm" id="vadd">${icon("plus", 16)} Agregar presentación</button>
           </section>
 
+          <section class="card" id="bulkCard">
+            <h3 class="card__title">Venta suelta (por peso)</h3>
+            <p class="muted small">Además de las presentaciones, el cliente puede pedir los gramos que quiera.</p>
+            <div class="f-row">
+              <label class="f">¿Se vende suelto?<select name="bulk" class="select">
+                <option value="" ${d.bulk == null ? "selected" : ""} id="bulkInherit"></option>
+                <option value="1" ${d.bulk === true ? "selected" : ""}>Sí, siempre</option>
+                <option value="0" ${d.bulk === false ? "selected" : ""}>No, solo presentaciones</option></select></label>
+              <label class="f bulk-f">Mínimo que puede pedir<select name="bulkMin" class="select">${[50, 100, 150, 200, 250, 300, 500, 1000].map((g) => `<option value="${g}" ${Bulk.min(d) === g ? "selected" : ""}>${Bulk.label(g)}</option>`).join("")}</select></label>
+            </div>
+            <div class="f-row bulk-f">
+              <label class="f">Sube de a<select name="bulkStep" class="select">${[10, 25, 50, 100, 250].map((g) => `<option value="${g}" ${Bulk.step(d) === g ? "selected" : ""}>${g} g</option>`).join("")}</select></label>
+              <label class="f">Precio por kg <small>(vacío = automático)</small><span class="money"><i>$</i><input name="kgPrice" type="number" min="0" step="10" value="${d.kgPrice || ""}" placeholder=""></span></label>
+            </div>
+            <p class="hint" id="bulkHint"></p>
+          </section>
+
           <section class="card">
             <h3 class="card__title">Etiquetas</h3>
             <div class="chips">${Object.entries(TAGS).map(([k, l]) => `<label class="chipbox"><input type="checkbox" name="tag" value="${k}" ${d.tags?.includes(k) ? "checked" : ""}><span>${esc(l)}</span></label>`).join("")}</div>
@@ -511,7 +528,24 @@
       d.stock = Math.max(0, Math.round(Number(f.stock.value) || 0));
       d.tags = $$("input[name=tag]:checked", f).map((x) => x.value);
       d.paused = !f.visible.checked; d.isNew = f.isNew.checked; d.featured = f.featured.checked;
+      d.bulk = f.bulk.value === "" ? null : f.bulk.value === "1";
+      d.bulkMin = Number(f.bulkMin.value); d.bulkStep = Number(f.bulkStep.value);
+      d.kgPrice = Math.round(Number(f.kgPrice.value) || 0) || null;
       rows[0].price = d.price;
+    };
+    // Venta suelta: textos según la categoría y ejemplo de precio
+    const drawBulk = () => {
+      const cat = cats.find((c) => c.id === f.cat.value);
+      $("#bulkInherit").textContent = `Según la categoría (${cat?.bulk ? "sí" : "no"})`;
+      const auto = Bulk.autoKg(d.price, rows.map((r, i) => ({ label: r.label, mult: i === 0 ? 1 : (d.price ? r.price / d.price : 1) })));
+      f.kgPrice.placeholder = auto ? `${auto} (automático)` : "Poné el precio por kg";
+      const kg = d.kgPrice || auto;
+      const on = (d.bulk ?? !!cat?.bulk);
+      $$(".bulk-f", f).forEach((x) => x.classList.toggle("is-off", !on));
+      const ex = Math.max(d.bulkMin, 350 - (350 % d.bulkStep));
+      $("#bulkHint").innerHTML = !on ? "El cliente solo puede elegir las presentaciones."
+        : !kg ? `<span class="warn">Poné el precio por kg (no se pudo calcular de las presentaciones).</span>`
+        : `El cliente pide desde <b>${Bulk.label(d.bulkMin)}</b>, de a ${d.bulkStep} g, a <b>${money(kg)} el kg</b>. Ej: ${Bulk.label(ex)} = ${money(Math.round(kg * ex / 10000) * 10)}.${d.kgPrice ? "" : " Precio por kg calculado de la presentación más grande."}`;
     };
     const drawRows = () => {
       $("#vrows").innerHTML = rows.map((r, i) => `<div class="vrow" data-i="${i}">
@@ -538,7 +572,7 @@
         : d.oldPrice && d.oldPrice <= d.price ? `<span class="warn">El precio anterior tiene que ser mayor al precio actual para mostrarse como oferta.</span>`
         : d.price ? `Con transferencia (${Math.round((store.transferDiscount || 0) * 100)}% OFF): <b>${money(transfer)}</b>.` : "";
     };
-    drawRows(); drawPreview();
+    drawRows(); readForm(); drawPreview(); drawBulk();
 
     f.addEventListener("input", (e) => {
       if (e.target.closest(".vrow")) {
@@ -546,10 +580,10 @@
         if (e.target.classList.contains("vlabel")) rows[i].label = e.target.value;
         if (e.target.classList.contains("vprice")) rows[i].price = Math.round(Number(e.target.value) || 0);
       }
-      readForm(); drawPreview();
+      readForm(); drawPreview(); drawBulk();
       if (e.target.name === "price") { const first = $(".vrow[data-i='0'] .vprice"); if (first) first.value = d.price || ""; }
     });
-    f.addEventListener("change", () => { readForm(); drawPreview(); });
+    f.addEventListener("change", () => { readForm(); drawPreview(); drawBulk(); });
     $("#vadd").addEventListener("click", () => { rows.push({ label: "", price: d.price ? round10(d.price * 1.9) : 0 }); drawRows(); $(`.vrow[data-i='${rows.length - 1}'] .vlabel`).focus(); });
     $("#vrows").addEventListener("click", (e) => { const b = e.target.closest("[data-vdel]"); if (!b) return; rows.splice(Number(b.dataset.vdel), 1); drawRows(); drawPreview(); });
 
@@ -780,6 +814,7 @@
   const ACTIVE = ["nuevo", "preparando", "listo", "entregado"];
   const unitsOf = (it, products) => {
     const p = products.find((x) => x.id === it.id);
+    if (it.grams) return Math.max(1, Math.round(it.grams / (p ? Bulk.base(p) : 250)));
     const v = p?.variants?.find((x) => x.label === it.variant);
     return it.qty * Math.max(1, Math.round(v?.mult || 1));
   };
@@ -920,7 +955,7 @@
           <ul class="pack" id="pack">${o.items.map((it, i) => { const p = imgOf(it); return `<li class="${packed.has(i) ? "ok" : ""}">
             <label><input type="checkbox" data-i="${i}" ${packed.has(i) ? "checked" : ""}><span class="pack__box">${icon("check", 14)}</span></label>
             <span class="pack__img">${p ? thumb(p) : ""}</span>
-            <div class="pack__info"><b>${it.qty} × ${esc(it.name)}</b><small>${esc(it.variant)} · ${money(it.unit)} c/u</small></div>
+            <div class="pack__info"><b>${it.grams ? "" : `${it.qty} × `}${esc(it.name)}</b><small>${esc(it.variant)}${it.grams ? "" : ` · ${money(it.unit)} c/u`}</small></div>
             <b class="num">${money(it.unit * it.qty)}</b></li>`; }).join("")}</ul>
           <div class="totals">
             <div><span>Subtotal</span><span>${money(o.subtotal)}</span></div>
@@ -983,7 +1018,7 @@
         <div><small>Pago</small><b>${esc(o.pay || "—")}</b></div>
       </div>
       <table><thead><tr><th></th><th>Cant.</th><th>Producto</th><th>Presentación</th><th class="num">Subtotal</th></tr></thead>
-      <tbody>${o.items.map((it) => `<tr><td><span class="slip__box"></span></td><td>${it.qty}</td><td>${esc(it.name)}</td><td>${esc(it.variant)}</td><td class="num">${money(it.unit * it.qty)}</td></tr>`).join("")}</tbody></table>
+      <tbody>${o.items.map((it) => `<tr><td><span class="slip__box"></span></td><td>${it.grams ? Bulk.label(it.grams) : it.qty}</td><td>${esc(it.name)}</td><td>${esc(it.variant)}</td><td class="num">${money(it.unit * it.qty)}</td></tr>`).join("")}</tbody></table>
       <div class="slip__tot"><span>Subtotal ${money(o.subtotal)}</span>${o.discount ? `<span>Descuento −${money(o.discount)}</span>` : ""}<span>Envío ${o.shipping ? money(o.shipping) : "gratis"}</span><b>Total ${money(o.total)}</b></div>
       ${o.notes ? `<p><small>Notas:</small> ${esc(o.notes)}</p>` : ""}
     </div>`;
@@ -1132,11 +1167,15 @@
     view.innerHTML = `
       <div class="page-head"><div><h2>Categorías</h2><p class="muted">El orden de esta lista es el de la barra de categorías y los menús de la tienda.</p></div></div>
       <section class="card">
-        <form class="add-row" id="catAdd"><input class="input" name="name" placeholder="Nueva categoría (ej: Snacks saludables)" autocomplete="off"><button class="btn btn--primary" type="submit">${icon("plus", 18)} Agregar</button></form>
+        <form class="add-row" id="catAdd"><input class="input" name="name" placeholder="Nueva categoría (ej: Snacks saludables)" autocomplete="off">
+          <label class="cats__bulk" title="Sus productos se pueden pedir por gramos"><input type="checkbox" name="bulk"><span>Venta suelta (por peso)</span></label>
+          <button class="btn btn--primary" type="submit">${icon("plus", 18)} Agregar</button></form>
+        <p class="muted small cats__help">Con <b>venta suelta</b>, los productos de la categoría se pueden pedir por gramos (desde un mínimo). Cada producto puede cambiarlo en su ficha.</p>
         <ul class="cats">${cats.map((c, i) => `<li data-i="${i}">
           <input type="color" class="cats__color" value="${esc(c.color || "#c9d58b")}" aria-label="Color de ${esc(c.name)}" title="Color del ícono">
           <input class="cats__name input" value="${esc(c.name)}" aria-label="Nombre">
           <a class="cats__count" href="#/productos" data-filter="${c.id}">${count(c.id)} producto${count(c.id) === 1 ? "" : "s"}</a>
+          <label class="cats__bulk" title="Sus productos se pueden pedir por gramos"><input type="checkbox" data-bulk ${c.bulk ? "checked" : ""}><span>Suelto</span></label>
           <div class="slides__act">
             <button class="icon-btn" type="button" data-mv="-1" ${i === 0 ? "disabled" : ""} aria-label="Subir">${icon("up", 18)}</button>
             <button class="icon-btn" type="button" data-mv="1" ${i === cats.length - 1 ? "disabled" : ""} aria-label="Bajar">${icon("down", 18)}</button>
@@ -1147,11 +1186,12 @@
     $("#catAdd").addEventListener("submit", async (e) => {
       e.preventDefault(); const name = e.target.name.value.trim(); if (!name) return;
       let id = slug(name); while (cats.some((c) => c.id === id)) id += "-2";
-      await save([...cats, { id, name, color: "#c9d58b" }], `Categoría "${name}" creada`); renderCategories();
+      await save([...cats, { id, name, color: "#c9d58b", bulk: e.target.bulk.checked }], `Categoría "${name}" creada`); renderCategories();
     });
     $$(".cats li").forEach((li) => {
       const i = Number(li.dataset.i);
       li.querySelector(".cats__name").addEventListener("change", async (e) => { const v = e.target.value.trim(); if (!v) { e.target.value = cats[i].name; return; } cats[i].name = v; await save(cats, "Nombre guardado"); });
+      li.querySelector("[data-bulk]").addEventListener("change", async (e) => { cats[i].bulk = e.target.checked; await save(cats, e.target.checked ? `${cats[i].name}: se puede pedir suelto` : `${cats[i].name}: solo presentaciones`); });
       li.querySelector(".cats__color").addEventListener("change", async (e) => { cats[i].color = e.target.value; await save(cats, "Color guardado"); });
       li.querySelectorAll("[data-mv]").forEach((b) => b.addEventListener("click", async () => { await save(moveItem(cats, i, Number(b.dataset.mv))); renderCategories(); }));
       li.querySelector("[data-del]").addEventListener("click", async () => { if (!confirm(`¿Eliminar la categoría "${cats[i].name}"?`)) return; await save(cats.filter((_, j) => j !== i), "Categoría eliminada"); renderCategories(); });

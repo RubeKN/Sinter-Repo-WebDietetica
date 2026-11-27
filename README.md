@@ -75,6 +75,12 @@ Etapas: 1) estructura, ingreso y resumen ✔ · 2) productos y aumento masivo de
 Para adaptar la demo a otra dietética: Panel → Configuración (nombre, logo, colores, WhatsApp,
 dirección, horarios y envíos). La tienda toma esos datos al recargar.
 
+## Venta suelta (por peso)
+
+- En **Categorías** cada categoría se marca como *Suelto* o no (frutos secos, semillas, mixes, frutas deshidratadas, harinas y legumbres vienen activadas).
+- En la ficha de cada producto, la tarjeta **Venta suelta** permite: seguir lo que diga la categoría, forzar *Sí* o *No*, elegir el **mínimo** de gramos, de a cuánto sube y el **precio por kg** (si se deja vacío se calcula de la presentación más grande).
+- En la tienda aparece la opción *Suelto: elegí los gramos*; el carrito, el mensaje de WhatsApp y el pedido muestran los gramos. El stock se descuenta en paquetes de la primera presentación.
+
 ## Próximos pasos sugeridos
 
 - Completar las fotos de los productos que todavía usan ícono

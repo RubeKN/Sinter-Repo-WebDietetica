@@ -1346,3 +1346,18 @@ html { font-size: 16px; }
 @media (min-width: 1024px) {
   html { font-size: clamp(14px, min(1.1111vw, 1.7778vh), 22px); }
 }
+
+/* Venta suelta (por peso) */
+.variant--bulk { border-style: dashed; }
+.variant--bulk.active { border-style: solid; }
+.bulkbox { margin-top: 1rem; }
+.bulkbox[hidden], .pdp__buy .qty[hidden] { display: none; }
+.bulkbox__row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.qty--g input { width: 3.75rem; }
+.qty--sm.qty--g input { width: 2.75rem; }
+.qty__unit { font-weight: 700; color: var(--muted); font-size: .9rem; padding-right: 0.25rem; }
+.bulkbox__quick { display: flex; gap: 0.375rem; }
+.bulkbox__quick button { border: 1px solid var(--border); background: #fff; padding: 0.4375rem 0.75rem; font-weight: 700; font-size: .86rem; border-radius: 0.25rem; color: var(--text); }
+.bulkbox__quick button:hover { border-color: var(--green); }
+.bulkbox__quick button.on { border-color: var(--green); background: var(--green-soft); color: var(--green-dark); }
+.bulkbox__hint { margin: 0.5rem 0 0; font-size: .84rem; color: var(--muted); }

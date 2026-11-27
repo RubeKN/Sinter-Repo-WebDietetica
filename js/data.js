@@ -18,12 +18,12 @@ window.STORE = {
 };
 
 window.CATEGORIES = [
-  { id: "frutos-secos", name: "Frutos secos", color: "#c98b4b" },
-  { id: "semillas", name: "Semillas", color: "#d9b44a" },
-  { id: "mixes", name: "Mixes y granolas", color: "#b5884f" },
-  { id: "frutas-deshidratadas", name: "Frutas deshidratadas", color: "#d0763a" },
-  { id: "harinas", name: "Harinas y premezclas", color: "#c7a873" },
-  { id: "legumbres", name: "Legumbres", color: "#8f5f3a" },
+  { id: "frutos-secos", name: "Frutos secos", color: "#c98b4b", bulk: true },
+  { id: "semillas", name: "Semillas", color: "#d9b44a", bulk: true },
+  { id: "mixes", name: "Mixes y granolas", color: "#b5884f", bulk: true },
+  { id: "frutas-deshidratadas", name: "Frutas deshidratadas", color: "#d0763a", bulk: true },
+  { id: "harinas", name: "Harinas y premezclas", color: "#c7a873", bulk: true },
+  { id: "legumbres", name: "Legumbres", color: "#8f5f3a", bulk: true },
   { id: "suplementos", name: "Suplementos", color: "#5f8c6a" },
   { id: "infusiones", name: "Infusiones y yerbas", color: "#6f9a52" },
   { id: "almacen", name: "Almacén natural", color: "#d08a2e" },
