@@ -36,6 +36,15 @@
   const DEMO_USER = { email: "demo@sinter.com", pass: "demo1234", name: "Administrador" };
 
   const clone = (o) => JSON.parse(JSON.stringify(o));
+
+  // Configuración de la tienda por defecto (se completa con lo que haya guardado)
+  const STORE_DEFAULTS = {
+    name: "Sinter Natural", shortName: "SINTER", tagline: "Dietética natural",
+    logo: "", colorBrand: "#c9d58b", colorDark: "#213f2f",
+    address: "Av. Ejemplo 1234", hours: "Lunes a sábado de 9 a 13 y de 16 a 20 hs",
+    instagram: "", showCountdown: true, heroOrder: []
+  };
+  const withDefaults = (store) => ({ ...STORE_DEFAULTS, ...store });
   const ls = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } },
@@ -124,7 +133,7 @@
     mode: "demo",
     loadCatalog() {
       const db = read();
-      return ok({ STORE: db.store, CATEGORIES: db.categories, TAGS: db.tags, PRODUCTS: db.products, REVIEWS: db.reviews });
+      return ok({ STORE: withDefaults(db.store), CATEGORIES: db.categories, TAGS: db.tags, PRODUCTS: db.products, REVIEWS: db.reviews });
     },
 
     /* Productos */
@@ -140,8 +149,9 @@
     deleteProduct(id) { const db = read(); db.products = db.products.filter((p) => p.id !== id); write(db); return ok(true); },
 
     /* Tienda, categorías y reseñas */
-    getStore() { return ok(read().store); },
-    saveStore(patch) { const db = read(); db.store = { ...db.store, ...patch }; write(db); return ok(db.store); },
+    getStore() { return ok(withDefaults(read().store)); },
+    saveStore(patch) { const db = read(); db.store = { ...db.store, ...patch }; write(db); return ok(withDefaults(db.store)); },
+    storeDefaults: STORE_DEFAULTS,
     getCategories() { return ok(read().categories); },
     saveCategories(list) { const db = read(); db.categories = clone(list); write(db); return ok(list); },
     getReviews() { return ok(read().reviews); },

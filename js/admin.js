@@ -40,12 +40,12 @@
     { id: "inicio", label: "Inicio", ico: "home", ready: true },
     { id: "productos", label: "Productos", ico: "box", ready: true, desc: "Crear, editar, duplicar y pausar productos. Fotos, presentaciones, etiquetas, stock y edición rápida de precios desde la lista." },
     { id: "precios", label: "Aumento de precios", ico: "trend", ready: true, desc: "Subí o bajá precios en bloque por porcentaje, a toda la tienda o por categoría, con vista previa y redondeo." },
-    { id: "ofertas", label: "Ofertas", ico: "tag", stage: 4, desc: "Marcá productos en oferta, definí la fecha de fin de la promo semanal y el descuento por transferencia." },
+    { id: "ofertas", label: "Ofertas", ico: "tag", ready: true, desc: "Marcá productos en oferta, definí la fecha de fin de la promo semanal y el descuento por transferencia." },
     { id: "pedidos", label: "Pedidos", ico: "bag", ready: true, desc: "Todos los pedidos de la tienda con su estado (nuevo, preparando, listo, entregado), detalle para armar y contacto por WhatsApp." },
-    { id: "categorias", label: "Categorías", ico: "grid", stage: 4, desc: "Creá, renombrá y ordená las categorías de la tienda." },
-    { id: "portada", label: "Portada", ico: "image", stage: 4, desc: "Elegí qué productos aparecen en el carrusel de novedades y en qué orden." },
-    { id: "resenas", label: "Reseñas", ico: "star", stage: 4, desc: "Cargá, ocultá y ordená los comentarios de clientes que se muestran en el inicio." },
-    { id: "config", label: "Configuración", ico: "gear", stage: 4, desc: "Nombre, logo, colores, WhatsApp, dirección, horarios y costos de envío de la tienda." }
+    { id: "categorias", label: "Categorías", ico: "grid", ready: true, desc: "Creá, renombrá y ordená las categorías de la tienda." },
+    { id: "portada", label: "Portada", ico: "image", ready: true, desc: "Elegí qué productos aparecen en el carrusel de novedades y en qué orden." },
+    { id: "resenas", label: "Reseñas", ico: "star", ready: true, desc: "Cargá, ocultá y ordená los comentarios de clientes que se muestran en el inicio." },
+    { id: "config", label: "Configuración", ico: "gear", ready: true, desc: "Nombre, logo, colores, WhatsApp, dirección, horarios y costos de envío de la tienda." }
   ];
 
   function toast(msg) {
@@ -79,6 +79,13 @@
   /* =======================================================================
      Estructura del panel
      ======================================================================= */
+  // Logo y nombre de la tienda también en el panel
+  async function paintBrand() {
+    const st = await DB.getStore(); const brand = $(".side__brand");
+    $("span", brand).textContent = st.shortName || "SINTER";
+    $("img", brand).src = st.logo || "img/logo-96.png";
+  }
+
   async function start() {
     const user = await DB.currentUser();
     if (!user) return showLogin();
@@ -89,6 +96,7 @@
       `<a class="side__link" href="#/${s.id}" data-sec="${s.id}">${icon(s.ico)}<span>${s.label}</span>${s.ready ? "" : `<em>Pronto</em>`}</a>`).join("");
     paintIcons();
     refreshBadge();
+    paintBrand();
     route();
   }
 
@@ -113,6 +121,11 @@
     else if (sec.id === "productos") parts[1] ? renderEditor(parts[1]) : renderProducts();
     else if (sec.id === "precios") renderPrices();
     else if (sec.id === "pedidos") parts[1] ? renderOrder(decodeURIComponent(parts[1])) : renderOrders();
+    else if (sec.id === "ofertas") renderOffers();
+    else if (sec.id === "portada") renderHero();
+    else if (sec.id === "categorias") renderCategories();
+    else if (sec.id === "resenas") renderReviews();
+    else if (sec.id === "config") renderConfig();
     else renderSoon(sec);
     view.scrollTop = 0; window.scrollTo(0, 0);
   }
@@ -895,6 +908,315 @@
     if (!sec[0] || sec[0] === "inicio") renderDashboard();
   });
   DB.listOrders().then((o) => { lastNew = o[0]?.id; });
+
+  /* =======================================================================
+     Etapa 4 — utilidades
+     ======================================================================= */
+  PATHS.up = '<path d="M6 15l6-6 6 6"/>';
+  PATHS.down = '<path d="M6 9l6 6 6-6"/>';
+  PATHS.eye = '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
+  PATHS.eyeOff = '<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/>';
+  const toLocalInput = (iso) => { const d = new Date(iso); if (isNaN(d)) return ""; const p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+  const moveItem = (arr, i, dir) => { const j = i + dir; if (j < 0 || j >= arr.length) return arr; const a = [...arr]; [a[i], a[j]] = [a[j], a[i]]; return a; };
+  const slug = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "categoria";
+  const pickProduct = (products, placeholder) => `<select class="select" data-pick><option value="">${placeholder}</option>${products.map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select>`;
+
+  /* =======================================================================
+     Ofertas
+     ======================================================================= */
+  async function renderOffers() {
+    const [products, store] = await Promise.all([DB.getProducts(), DB.getStore()]);
+    const onSale = products.filter((p) => offPct(p) > 0);
+    const others = products.filter((p) => !offPct(p));
+    const end = new Date(store.promoEndsAt);
+    const left = end - new Date();
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Ofertas</h2><p class="muted">${onSale.length} productos en oferta · se muestran en "Ofertas de la semana"</p></div></div>
+      <div class="grid2">
+        <section class="card">
+          <h3 class="card__title">Promoción semanal</h3>
+          <label class="f">Termina el<input type="datetime-local" id="promoEnd" value="${toLocalInput(store.promoEndsAt)}"></label>
+          <p class="hint">${left > 0 ? `Faltan <b>${Math.floor(left / 86400000)} días y ${Math.floor((left % 86400000) / 3600000)} horas</b>.` : `<span class="warn">La promoción ya terminó: la cuenta regresiva muestra cero.</span>`}</p>
+          <div class="quick-dates">${[[3, "3 días"], [7, "1 semana"], [14, "2 semanas"]].map(([d, l]) => `<button type="button" class="btn btn--ghost btn--sm" data-days="${d}">+ ${l} desde hoy</button>`).join("")}</div>
+          <label class="toggle"><span><b>Mostrar cuenta regresiva</b><small>En la sección "Ofertas de la semana" del inicio</small></span><span class="switch"><input type="checkbox" id="showCd" ${store.showCountdown !== false ? "checked" : ""}><span></span></span></label>
+        </section>
+        <section class="card">
+          <h3 class="card__title">Descuento por transferencia</h3>
+          <label class="pct__in pct__in--sm"><input type="number" id="transfer" min="0" max="50" step="1" value="${Math.round((store.transferDiscount || 0) * 100)}"><span>%</span></label>
+          <p class="hint">Se muestra en todas las tarjetas ("$X transferencia") y se descuenta al elegir transferencia al pagar.</p>
+        </section>
+      </div>
+      <section class="card">
+        <div class="card__head"><h3>Productos en oferta</h3></div>
+        <div class="add-row">
+          ${pickProduct(others, "Elegí un producto para poner en oferta…")}
+          <label class="pct__in pct__in--sm"><input type="number" id="newPct" min="1" max="90" step="1" value="15"><span>% OFF</span></label>
+          <button class="btn btn--primary" type="button" id="addOffer">${icon("plus", 18)} Poner en oferta</button>
+        </div>
+        ${onSale.length ? `<div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Producto</th><th class="num">Antes</th><th class="num">Ahora</th><th class="num">Descuento</th><th></th></tr></thead>
+          <tbody>${onSale.map((p) => `<tr>
+            <td><div class="cell-prod">${thumb(p, "cell-prod__img")}<a href="#/productos/${p.id}"><b>${esc(p.name)}</b></a></div></td>
+            <td class="num muted"><s>${money(p.oldPrice)}</s></td><td class="num"><b>${money(p.price)}</b></td>
+            <td class="num"><span class="pb pb--off">-${offPct(p)}%</span></td>
+            <td class="num"><button class="btn btn--ghost btn--sm" type="button" data-unoffer="${p.id}">Quitar oferta</button></td></tr>`).join("")}</tbody></table></div>`
+          : `<div class="empty">No hay productos en oferta.</div>`}
+      </section>`;
+
+    const save = async (patch, msg) => { await DB.saveStore(patch); toast(msg); };
+    $("#promoEnd").addEventListener("change", async (e) => { if (!e.target.value) return; await save({ promoEndsAt: new Date(e.target.value).toISOString() }, "Fecha de la promo guardada"); renderOffers(); });
+    $$("[data-days]").forEach((b) => b.addEventListener("click", async () => {
+      const d = new Date(); d.setDate(d.getDate() + Number(b.dataset.days)); d.setHours(23, 59, 0, 0);
+      await save({ promoEndsAt: d.toISOString() }, "Promo extendida"); renderOffers();
+    }));
+    $("#showCd").addEventListener("change", (e) => save({ showCountdown: e.target.checked }, e.target.checked ? "Cuenta regresiva visible" : "Cuenta regresiva oculta"));
+    $("#transfer").addEventListener("change", (e) => { const v = Math.max(0, Math.min(50, Number(e.target.value) || 0)); e.target.value = v; save({ transferDiscount: v / 100 }, `Descuento por transferencia: ${v}%`); });
+    $("#addOffer").addEventListener("click", async () => {
+      const id = Number($("[data-pick]").value); const pct = Number($("#newPct").value);
+      if (!id) return toast("Elegí un producto");
+      if (!(pct > 0 && pct < 91)) return toast("Poné un descuento entre 1 y 90 %");
+      const p = products.find((x) => x.id === id);
+      await DB.saveProduct({ ...p, oldPrice: p.price, price: round10(p.price * (1 - pct / 100)) });
+      toast(`${p.name} en oferta (-${pct}%)`); renderOffers();
+    });
+    $$("[data-unoffer]").forEach((b) => b.addEventListener("click", async () => {
+      const p = products.find((x) => x.id === Number(b.dataset.unoffer));
+      await DB.saveProduct({ ...p, price: p.oldPrice, oldPrice: null });
+      toast(`${p.name}: oferta quitada`); renderOffers();
+    }));
+  }
+
+  /* =======================================================================
+     Portada (carrusel de novedades)
+     ======================================================================= */
+  async function renderHero() {
+    const [products, store] = await Promise.all([DB.getProducts(), DB.getStore()]);
+    const order = store.heroOrder || [];
+    const pos = (p) => { const i = order.indexOf(p.id); return i < 0 ? 999 + p.id : i; };
+    const slides = products.filter((p) => p.isNew).sort((a, b) => pos(a) - pos(b));
+    const others = products.filter((p) => !p.isNew && !p.paused);
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Portada</h2><p class="muted">Productos del carrusel "Nuevo ingreso" del inicio, en el orden en que aparecen.</p></div>
+        <a class="btn btn--ghost" href="./" target="_blank" rel="noopener">${icon("store", 18)} Ver en la tienda</a></div>
+      <section class="card">
+        <div class="add-row">${pickProduct(others, "Agregar un producto al carrusel…")}<button class="btn btn--primary" type="button" id="addSlide">${icon("plus", 18)} Agregar</button></div>
+        ${slides.length ? `<ol class="slides">${slides.map((p, i) => `<li data-id="${p.id}">
+          <span class="slides__n">${i + 1}</span>
+          <span class="slides__img">${thumb(p)}</span>
+          <div class="slides__info"><b>${esc(p.name)}</b><span class="muted">${money(p.price)}${p.paused ? " · <em class='warn'>pausado: no se muestra</em>" : ""}</span></div>
+          <div class="slides__act">
+            <button class="icon-btn" type="button" data-mv="-1" ${i === 0 ? "disabled" : ""} aria-label="Subir">${icon("up", 18)}</button>
+            <button class="icon-btn" type="button" data-mv="1" ${i === slides.length - 1 ? "disabled" : ""} aria-label="Bajar">${icon("down", 18)}</button>
+            <button class="icon-btn icon-btn--danger" type="button" data-rm aria-label="Quitar del carrusel">${icon("x", 18)}</button>
+          </div></li>`).join("")}</ol>`
+          : `<div class="empty">El carrusel está vacío. Agregá productos para mostrarlos en el inicio.</div>`}
+      </section>`;
+    const ids = slides.map((p) => p.id);
+    $("#addSlide").addEventListener("click", async () => {
+      const id = Number($("[data-pick]").value); if (!id) return toast("Elegí un producto");
+      const p = products.find((x) => x.id === id);
+      await DB.saveProduct({ ...p, isNew: true }); await DB.saveStore({ heroOrder: [...ids, id] });
+      toast(`${p.name} agregado al carrusel`); renderHero();
+    });
+    $$(".slides li").forEach((li, i) => {
+      li.querySelectorAll("[data-mv]").forEach((b) => b.addEventListener("click", async () => { await DB.saveStore({ heroOrder: moveItem(ids, i, Number(b.dataset.mv)) }); renderHero(); }));
+      li.querySelector("[data-rm]").addEventListener("click", async () => {
+        const p = products.find((x) => x.id === Number(li.dataset.id));
+        await DB.saveProduct({ ...p, isNew: false }); await DB.saveStore({ heroOrder: ids.filter((x) => x !== p.id) });
+        toast(`${p.name} quitado del carrusel`); renderHero();
+      });
+    });
+  }
+
+  /* =======================================================================
+     Categorías
+     ======================================================================= */
+  async function renderCategories() {
+    const [cats, products] = await Promise.all([DB.getCategories(), DB.getProducts()]);
+    const count = (id) => products.filter((p) => p.cat === id).length;
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Categorías</h2><p class="muted">El orden de esta lista es el de la barra de categorías y los menús de la tienda.</p></div></div>
+      <section class="card">
+        <form class="add-row" id="catAdd"><input class="input" name="name" placeholder="Nueva categoría (ej: Snacks saludables)" autocomplete="off"><button class="btn btn--primary" type="submit">${icon("plus", 18)} Agregar</button></form>
+        <ul class="cats">${cats.map((c, i) => `<li data-i="${i}">
+          <input type="color" class="cats__color" value="${esc(c.color || "#c9d58b")}" aria-label="Color de ${esc(c.name)}" title="Color del ícono">
+          <input class="cats__name input" value="${esc(c.name)}" aria-label="Nombre">
+          <a class="cats__count" href="#/productos" data-filter="${c.id}">${count(c.id)} producto${count(c.id) === 1 ? "" : "s"}</a>
+          <div class="slides__act">
+            <button class="icon-btn" type="button" data-mv="-1" ${i === 0 ? "disabled" : ""} aria-label="Subir">${icon("up", 18)}</button>
+            <button class="icon-btn" type="button" data-mv="1" ${i === cats.length - 1 ? "disabled" : ""} aria-label="Bajar">${icon("down", 18)}</button>
+            <button class="icon-btn icon-btn--danger" type="button" data-del ${count(c.id) ? `disabled title="Tiene productos: movelos a otra categoría antes de borrarla"` : ""} aria-label="Eliminar">${icon("trash", 18)}</button>
+          </div></li>`).join("")}</ul>
+      </section>`;
+    const save = async (list, msg) => { await DB.saveCategories(list); if (msg) toast(msg); };
+    $("#catAdd").addEventListener("submit", async (e) => {
+      e.preventDefault(); const name = e.target.name.value.trim(); if (!name) return;
+      let id = slug(name); while (cats.some((c) => c.id === id)) id += "-2";
+      await save([...cats, { id, name, color: "#c9d58b" }], `Categoría "${name}" creada`); renderCategories();
+    });
+    $$(".cats li").forEach((li) => {
+      const i = Number(li.dataset.i);
+      li.querySelector(".cats__name").addEventListener("change", async (e) => { const v = e.target.value.trim(); if (!v) { e.target.value = cats[i].name; return; } cats[i].name = v; await save(cats, "Nombre guardado"); });
+      li.querySelector(".cats__color").addEventListener("change", async (e) => { cats[i].color = e.target.value; await save(cats, "Color guardado"); });
+      li.querySelectorAll("[data-mv]").forEach((b) => b.addEventListener("click", async () => { await save(moveItem(cats, i, Number(b.dataset.mv))); renderCategories(); }));
+      li.querySelector("[data-del]").addEventListener("click", async () => { if (!confirm(`¿Eliminar la categoría "${cats[i].name}"?`)) return; await save(cats.filter((_, j) => j !== i), "Categoría eliminada"); renderCategories(); });
+      li.querySelector("[data-filter]").addEventListener("click", () => { pState.cat = li.querySelector("[data-filter]").dataset.filter; pState.filter = "todos"; pState.q = ""; });
+    });
+  }
+
+  /* =======================================================================
+     Reseñas
+     ======================================================================= */
+  const SOURCES = [["google", "Google"], ["instagram", "Instagram"], ["whatsapp", "WhatsApp"], ["local", "En el local"], ["ejemplo", "Ejemplo (demo)"]];
+  const stars = (n) => `<span class="stars" aria-label="${n} de 5">${Array.from({ length: 5 }, (_, i) => `<span class="${i < n ? "on" : ""}">${icon("star", 15)}</span>`).join("")}</span>`;
+
+  async function renderReviews(editing = null) {
+    const reviews = await DB.getReviews();
+    const visible = reviews.filter((r) => !r.hidden).length;
+    const form = (r = {}, idx = -1) => `<form class="rv-form" data-idx="${idx}">
+      <div class="f-row"><label class="f">Nombre<input name="name" value="${esc(r.name || "")}" placeholder="Ej: Carlos D." required></label>
+        <label class="f">Origen<select name="source" class="select">${SOURCES.map(([k, l]) => `<option value="${k}" ${(r.source || "google") === k ? "selected" : ""}>${l}</option>`).join("")}</select></label></div>
+      <div class="f"><span>Estrellas</span><div class="star-pick">${[1, 2, 3, 4, 5].map((n) => `<label><input type="radio" name="stars" value="${n}" ${(r.stars || 5) === n ? "checked" : ""}><span>${icon("star", 22)}</span></label>`).join("")}</div></div>
+      <label class="f">Título<input name="title" value="${esc(r.title || "")}" placeholder="Ej: Buenos productos y buena atención"></label>
+      <label class="f">Comentario<textarea name="text" rows="3" placeholder="Copiá el comentario tal cual lo escribió el cliente" required>${esc(r.text || "")}</textarea></label>
+      <div class="rv-form__act"><button class="btn btn--primary" type="submit">${icon("check", 18)} ${idx < 0 ? "Agregar reseña" : "Guardar"}</button><button class="btn btn--ghost" type="button" data-cancel>Cancelar</button></div>
+    </form>`;
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Reseñas</h2><p class="muted">${visible} visibles de ${reviews.length} · se muestran en "Lo que dicen nuestros clientes"</p></div>
+        ${editing === null ? `<button class="btn btn--primary" type="button" id="newRv">${icon("plus", 18)} Nueva reseña</button>` : ""}</div>
+      ${reviews.some((r) => r.source === "ejemplo") ? `<div class="notice">${icon("alert", 18)}<span>Hay reseñas <b>de ejemplo</b>. Reemplazalas por reseñas reales de tus clientes (por ejemplo, copiadas de Google) u ocultalas.</span></div>` : ""}
+      ${editing === "new" ? `<section class="card">${form()}</section>` : ""}
+      <div class="rv-list">${reviews.map((r, i) => editing === i ? `<section class="card">${form(r, i)}</section>` : `<article class="card rv-item ${r.hidden ? "is-hidden" : ""}" data-i="${i}">
+        <div class="rv-item__head"><b>${esc(r.name)}</b>${stars(r.stars)}</div>
+        ${r.title ? `<h4>${esc(r.title)}</h4>` : ""}<p>${esc(r.text)}</p>
+        <div class="rv-item__foot"><span class="muted">${esc(SOURCES.find(([k]) => k === r.source)?.[1] || r.source || "")}${r.hidden ? " · oculta" : ""}</span>
+          <div class="slides__act">
+            <button class="icon-btn" type="button" data-mv="-1" ${i === 0 ? "disabled" : ""} aria-label="Subir">${icon("up", 18)}</button>
+            <button class="icon-btn" type="button" data-mv="1" ${i === reviews.length - 1 ? "disabled" : ""} aria-label="Bajar">${icon("down", 18)}</button>
+            <button class="icon-btn" type="button" data-hide title="${r.hidden ? "Mostrar" : "Ocultar"}" aria-label="${r.hidden ? "Mostrar" : "Ocultar"}">${icon(r.hidden ? "eye" : "eyeOff", 18)}</button>
+            <button class="icon-btn" type="button" data-edit aria-label="Editar">${icon("edit", 18)}</button>
+            <button class="icon-btn icon-btn--danger" type="button" data-del aria-label="Eliminar">${icon("trash", 18)}</button>
+          </div></div></article>`).join("")}</div>`;
+
+    $("#newRv")?.addEventListener("click", () => renderReviews("new"));
+    $$(".rv-form").forEach((f) => {
+      f.querySelector("[data-cancel]").addEventListener("click", () => renderReviews());
+      f.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const r = { name: f.name.value.trim(), source: f.source.value, stars: Number(f.stars.value), title: f.title.value.trim(), text: f.text.value.trim() };
+        if (!r.name || !r.text) return toast("Completá el nombre y el comentario");
+        const idx = Number(f.dataset.idx); const list = [...reviews];
+        if (idx < 0) list.unshift(r); else list[idx] = { ...list[idx], ...r };
+        await DB.saveReviews(list); toast(idx < 0 ? "Reseña agregada" : "Reseña guardada"); renderReviews();
+      });
+    });
+    $$(".rv-item").forEach((card) => {
+      const i = Number(card.dataset.i);
+      card.querySelectorAll("[data-mv]").forEach((b) => b.addEventListener("click", async () => { await DB.saveReviews(moveItem(reviews, i, Number(b.dataset.mv))); renderReviews(); }));
+      card.querySelector("[data-hide]").addEventListener("click", async () => { const list = [...reviews]; list[i] = { ...list[i], hidden: !list[i].hidden }; await DB.saveReviews(list); toast(list[i].hidden ? "Reseña oculta" : "Reseña visible"); renderReviews(); });
+      card.querySelector("[data-edit]").addEventListener("click", () => renderReviews(i));
+      card.querySelector("[data-del]").addEventListener("click", async () => { if (!confirm("¿Eliminar esta reseña?")) return; await DB.saveReviews(reviews.filter((_, j) => j !== i)); toast("Reseña eliminada"); renderReviews(); });
+    });
+  }
+
+  /* =======================================================================
+     Configuración de la tienda
+     ======================================================================= */
+  const PRESETS = [["Pistacho", "#c9d58b", "#213f2f"], ["Oliva", "#b8c46a", "#2f3b1c"], ["Terracota", "#e7b48f", "#5a2e1c"], ["Lavanda", "#c9c3e6", "#2e2a4f"], ["Miel", "#f0cf7a", "#3d2f12"], ["Menta", "#a9dcc4", "#173c33"]];
+
+  async function renderConfig() {
+    const s = await DB.getStore();
+    const d = { ...s };
+    view.innerHTML = `
+      <div class="page-head"><div><h2>Configuración</h2><p class="muted">Datos y aspecto de la tienda. Así se adapta a cada negocio.</p></div></div>
+      <form class="editor" id="cfg" novalidate>
+        <div class="editor__main">
+          <section class="card">
+            <h3 class="card__title">Marca</h3>
+            <div class="f-row"><label class="f">Nombre de la tienda<input name="name" value="${esc(d.name)}" placeholder="Ej: Dietética La Hoja"></label>
+              <label class="f">Nombre corto <small>(en el encabezado)</small><input name="shortName" value="${esc(d.shortName)}" maxlength="16"></label></div>
+            <label class="f">Frase <small>(al lado del logo)</small><input name="tagline" value="${esc(d.tagline)}" placeholder="Ej: Almacén natural"></label>
+            <div class="photo">
+              <div class="photo__preview" id="logoPrev"><img class="photo__img" src="${esc(d.logo || "img/logo-192.png")}" alt=""></div>
+              <div class="photo__side">
+                <label class="drop">${icon("upload", 22)}<b>Subir logo</b><span>PNG o JPG cuadrado. Se optimiza solo.</span><input type="file" accept="image/*" id="logoIn" hidden></label>
+                <button type="button" class="btn btn--ghost btn--sm" id="logoReset" ${d.logo ? "" : "hidden"}>Usar el logo de ejemplo</button>
+              </div>
+            </div>
+          </section>
+          <section class="card">
+            <h3 class="card__title">Colores</h3>
+            <div class="presets">${PRESETS.map(([n, a, b]) => `<button type="button" class="preset" data-a="${a}" data-b="${b}" title="${n}"><span style="background:${a}"></span><span style="background:${b}"></span><small>${n}</small></button>`).join("")}</div>
+            <div class="f-row">
+              <label class="f">Color principal <small>(barra de categorías, botones)</small><span class="color-in"><input type="color" name="colorBrand" value="${esc(d.colorBrand)}"><code>${esc(d.colorBrand)}</code></span></label>
+              <label class="f">Color oscuro <small>(pie, botones de compra)</small><span class="color-in"><input type="color" name="colorDark" value="${esc(d.colorDark)}"><code>${esc(d.colorDark)}</code></span></label>
+            </div>
+          </section>
+          <section class="card">
+            <h3 class="card__title">Contacto</h3>
+            <div class="f-row"><label class="f">WhatsApp <small>(con código de país, sin + ni espacios)</small><input name="whatsapp" value="${esc(d.whatsapp)}" inputmode="tel" placeholder="5491123456789"></label>
+              <label class="f">Ciudad o zona de envío<input name="city" value="${esc(d.city)}"></label></div>
+            <label class="f">Dirección del local<input name="address" value="${esc(d.address)}"></label>
+            <label class="f">Horarios<input name="hours" value="${esc(d.hours)}"></label>
+          </section>
+          <section class="card">
+            <h3 class="card__title">Envíos</h3>
+            <div class="f-row"><label class="f">Costo de envío<span class="money"><i>$</i><input name="shippingCost" type="number" min="0" step="50" value="${d.shippingCost}"></span></label>
+              <label class="f">Envío gratis desde<span class="money"><i>$</i><input name="freeShippingFrom" type="number" min="0" step="500" value="${d.freeShippingFrom}"></span></label></div>
+          </section>
+        </div>
+        <aside class="editor__side">
+          <section class="card">
+            <h3 class="card__title">Vista previa</h3>
+            <div class="mini" id="mini"></div>
+          </section>
+          <div class="editor__actions">
+            <button class="btn btn--primary btn--block" type="submit">${icon("check", 18)} Guardar configuración</button>
+            <a class="btn btn--ghost btn--block" href="./" target="_blank" rel="noopener">${icon("store", 18)} Ver tienda</a>
+            <button class="btn btn--ghost btn--block" type="button" id="cfgDefaults">Volver a los valores de ejemplo</button>
+          </div>
+        </aside>
+      </form>`;
+    const f = $("#cfg");
+    const drawMini = () => {
+      $("#mini").innerHTML = `
+        <div class="mini__head"><img src="${esc(d.logo || "img/logo-96.png")}" alt=""><b>${esc(d.shortName)}</b><span style="color:${esc(d.colorDark)}">${esc(d.tagline)}</span></div>
+        <div class="mini__bar" style="background:${esc(d.colorBrand)}"><span>Todo</span><span>Novedades</span><span>Frutos secos</span></div>
+        <div class="mini__body"><div class="mini__card"><i></i><b>Producto</b><span class="mini__btn" style="background:${esc(d.colorDark)}">VER Y PEDIR ›</span></div><div class="mini__card"><i></i><b>Producto</b><span class="mini__btn" style="background:${esc(d.colorDark)}">VER Y PEDIR ›</span></div></div>
+        <div class="mini__foot" style="background:${esc(d.colorDark)}"><b>${esc(d.name)}</b><span>${esc(d.address)} · ${esc(d.hours)}</span></div>`;
+    };
+    drawMini();
+    const read = () => {
+      ["name", "shortName", "tagline", "whatsapp", "city", "address", "hours", "colorBrand", "colorDark"].forEach((k) => { d[k] = f[k].value.trim(); });
+      d.whatsapp = d.whatsapp.replace(/\D/g, "");
+      d.shippingCost = Math.max(0, Math.round(Number(f.shippingCost.value) || 0));
+      d.freeShippingFrom = Math.max(0, Math.round(Number(f.freeShippingFrom.value) || 0));
+      $$(".color-in code", f).forEach((c, i) => { c.textContent = i ? d.colorDark : d.colorBrand; });
+      drawMini();
+    };
+    f.addEventListener("input", read);
+    $$(".preset").forEach((b) => b.addEventListener("click", () => { f.colorBrand.value = b.dataset.a; f.colorDark.value = b.dataset.b; read(); }));
+    $("#logoIn").addEventListener("change", async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try { d.logo = await shrinkImage(file, 256); $("#logoPrev img").src = d.logo; $("#logoReset").hidden = false; drawMini(); } catch { toast("No se pudo leer la imagen"); }
+    });
+    $("#logoReset").addEventListener("click", () => { d.logo = ""; $("#logoPrev img").src = "img/logo-192.png"; $("#logoReset").hidden = true; drawMini(); });
+    $("#cfgDefaults").addEventListener("click", async () => {
+      if (!confirm("¿Volver la marca, los colores y los datos de contacto a los valores de ejemplo?")) return;
+      const def = DB.storeDefaults || {};
+      await DB.saveStore({ name: def.name, shortName: def.shortName, tagline: def.tagline, logo: "", colorBrand: def.colorBrand, colorDark: def.colorDark, address: def.address, hours: def.hours });
+      paintBrand(); toast("Valores de ejemplo restaurados"); renderConfig();
+    });
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault(); read();
+      if (!d.name || !d.shortName) return toast("Completá el nombre de la tienda");
+      if (d.whatsapp && d.whatsapp.length < 10) return toast("Revisá el número de WhatsApp");
+      await DB.saveStore({ name: d.name, shortName: d.shortName, tagline: d.tagline, logo: d.logo, colorBrand: d.colorBrand, colorDark: d.colorDark,
+        whatsapp: d.whatsapp, city: d.city, address: d.address, hours: d.hours, shippingCost: d.shippingCost, freeShippingFrom: d.freeShippingFrom });
+      paintBrand();
+      toast("Configuración guardada. Recargá la tienda para verla.");
+    });
+  }
 
   /* ---------- Arranque ---------- */
   start();

@@ -70,7 +70,10 @@ Disponible en `/admin` (en local: `admin.html`).
   demo los vuelva a cargar.
 
 Etapas: 1) estructura, ingreso y resumen ✔ · 2) productos y aumento masivo de precios ✔ · 3) pedidos ✔ ·
-4) ofertas, portada, categorías, reseñas y configuración.
+4) ofertas, portada, categorías, reseñas y configuración ✔.
+
+Para adaptar la demo a otra dietética: Panel → Configuración (nombre, logo, colores, WhatsApp,
+dirección, horarios y envíos). La tienda toma esos datos al recargar.
 
 ## Próximos pasos sugeridos
 

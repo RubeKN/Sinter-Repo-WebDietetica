@@ -3,7 +3,8 @@
 
   // Los datos se leen siempre a través de la capa de datos (js/db.js)
   const CATALOG = await window.DB.loadCatalog();
-  const { STORE, CATEGORIES, TAGS, REVIEWS = [] } = CATALOG;
+  const { STORE, CATEGORIES, TAGS } = CATALOG;
+  const REVIEWS = (CATALOG.REVIEWS || []).filter((r) => !r.hidden);   // las ocultas desde el panel no se muestran
   const PRODUCTS = CATALOG.PRODUCTS.filter((p) => !p.paused);   // los pausados desde el panel no se muestran
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
@@ -21,7 +22,12 @@
   const offPct = (p) => (p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0);
   const isOffer = (p) => Boolean(p.oldPrice);
   const offers = () => PRODUCTS.filter(isOffer);
-  const novedades = () => PRODUCTS.filter((p) => p.isNew);
+  // Novedades en el orden elegido en el panel (Portada)
+  const novedades = () => {
+    const order = STORE.heroOrder || [];
+    const pos = (p) => { const i = order.indexOf(p.id); return i < 0 ? 999 + p.id : i; };
+    return PRODUCTS.filter((p) => p.isNew).sort((a, b) => pos(a) - pos(b));
+  };
   // Íconos de línea (sin emojis)
   const ICON = {
     leaf: (w = 20) => `<svg class="ico" width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-13 15-14-1 10-6 15-14 15"/><path d="M5 19c3-4 6-6 9-8"/></svg>`,
@@ -472,7 +478,7 @@
       return `<article class="slide" data-i="${i}" aria-roledescription="slide" aria-label="${i + 1} de ${items.length}">
         <div class="container nv">
           <div class="nv__left">
-            <div class="nv__brand"><img src="img/logo-96.png" width="24" height="24" alt=""> SINTER <span>· Nuevo ingreso</span></div>
+            <div class="nv__brand"><img src="${esc(STORE.logo || "img/logo-96.png")}" width="24" height="24" alt=""> ${esc(STORE.shortName || "")} <span>· Nuevo ingreso</span></div>
             <h2 class="nv__title" style="--len:${Math.max(7, ...p.name.split(" ").map((w) => w.length))}"><span>${esc(first)}</span>${rest.length ? `<em>${esc(rest.join(" "))}</em>` : ""}</h2>
             <p class="nv__desc">${esc(p.desc)}</p>
             <div class="nv__ctas">
@@ -675,7 +681,7 @@
       link: `<a class="prow__link" href="#/productos">Ver catálogo →</a>`, list: masVendidos })}
 
     ${rowSection({ id: "rowOffers", eyebrow: `Selección especial · ${off.length} productos`, eyebrowClass: "eyebrow--red", title: "Ofertas de la semana",
-      extra: `<div class="countdown countdown--inline" title="Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a las 23:59 (hora argentina)">
+      extra: STORE.showCountdown === false ? "" : `<div class="countdown countdown--inline" title="Hasta el ${endDate.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a las ${endDate.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" })} (hora argentina)">
             <span class="countdown__title">Termina en</span>
             <div class="countdown__nums" id="countdown"></div>
           </div>`,
@@ -989,8 +995,8 @@
       <h1>Contacto</h1>
       <p class="info__lead">Escribinos o pasá por el local.</p><!--body-->
       <ul class="info-list">
-        <li><span>Dirección</span><div>Av. Ejemplo 1234</div></li>
-        <li><span>Horarios</span><div>Lunes a sábado de 9 a 13 y de 16 a 20 hs</div></li>
+        <li><span>Dirección</span><div>${esc(STORE.address)}</div></li>
+        <li><span>Horarios</span><div>${esc(STORE.hours)}</div></li>
         <li><span>WhatsApp</span><div>Respondemos consultas y tomamos pedidos</div></li>
       </ul>
       <a class="btn info__cta" href="${waLink("Hola! Quería hacer una consulta")}" target="_blank" rel="noopener">Escribinos por WhatsApp</a>`
@@ -1133,7 +1139,31 @@
   }
 
   /* ---------------- Init ---------------- */
+  // Marca y colores definidos en el panel (Configuración)
+  function applyBrand() {
+    const set = (sel, v) => $$(sel).forEach((el) => { el.textContent = v; });
+    set(".js-short", STORE.shortName); set(".js-tagline", STORE.tagline); set(".js-name", STORE.name);
+    set(".js-address", STORE.address); set(".js-hours", STORE.hours);
+    if (STORE.logo) $$(".js-logo").forEach((img) => { img.removeAttribute("srcset"); img.src = STORE.logo; });
+    document.title = `${STORE.name} · ${STORE.tagline || "Dietética online"}`;
+    const r = document.documentElement.style;
+    if (STORE.colorBrand) {
+      const c = STORE.colorBrand;
+      r.setProperty("--pistachio", c); r.setProperty("--gold", c);
+      r.setProperty("--pistachio-dark", `color-mix(in srgb, ${c} 82%, #000)`);
+      r.setProperty("--pistachio-light", `color-mix(in srgb, ${c} 50%, #fff)`);
+      r.setProperty("--pistachio-soft", `color-mix(in srgb, ${c} 20%, #fff)`);
+      r.setProperty("--rv-bg", `color-mix(in srgb, ${c} 30%, #fff)`);
+    }
+    if (STORE.colorDark) {
+      r.setProperty("--forest", STORE.colorDark);
+      r.setProperty("--nv-bg", `color-mix(in srgb, ${STORE.colorDark} 70%, #000)`);
+      $('meta[name="theme-color"]')?.setAttribute("content", STORE.colorDark);
+    }
+  }
+
   function init() {
+    applyBrand();
     // Marquesina (duplicada para loop continuo)
     const msg = `Envíos gratis en <b>${esc(STORE.city)}</b> en compras a partir de ${money(STORE.freeShippingFrom)}`;
     const extra = `${STORE.transferDiscount * 100}% OFF pagando con transferencia`;
