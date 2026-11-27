@@ -700,6 +700,8 @@
   PATHS.x = '<path d="M6 6l12 12M18 6L6 18"/>';
   PATHS.user = '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>';
 
+  // Logo de WhatsApp (relleno, como el original)
+  const waIcon = (w = 20) => `<svg width="${w}" height="${w}" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 3C8.8 3 3 8.7 3 15.8c0 2.5.7 4.9 2 6.9L3 29l6.5-2c2 1.1 4.2 1.6 6.5 1.6 7.2 0 13-5.7 13-12.8S23.2 3 16 3zm0 23.3c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1.2 1.2-3.7-.3-.4c-1.1-1.7-1.7-3.7-1.7-5.8C5.2 9.9 10 5.2 16 5.2s10.8 4.7 10.8 10.6S22 26.3 16 26.3zm5.9-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.8-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.3.3-.6.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.7s1.2 3.1 1.4 3.4c.2.2 2.4 3.6 5.8 5 2.9 1.1 3.4.9 4.1.8.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4z"/></svg>`;
   const FLOW = ["sin_confirmar", "nuevo", "preparando", "listo", "entregado"];
   const NEXT_LABEL = { sin_confirmar: "Confirmar pedido", nuevo: "Empezar a preparar", preparando: "Marcar como listo", listo: "Marcar como entregado" };
   const firstHistory = (o) => [{ status: "sin_confirmar", at: o.createdAt }];
@@ -830,13 +832,13 @@
       <div class="ohead">
         <div><h2>Pedido ${esc(o.id)} ${chip(o.status)}</h2><p class="muted">${fmtDate(o.createdAt, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}${o.demo ? " · pedido de demostración" : ""}</p></div>
         <div class="ohead__actions">
-          <a class="btn btn--wa" href="${waMsg(o, store)}" target="_blank" rel="noopener">${icon("wa", 18)} WhatsApp al cliente</a>
+          <a class="btn btn--wa" href="${waMsg(o, store)}" target="_blank" rel="noopener">${waIcon(20)} WhatsApp al cliente</a>
           <button class="btn btn--ghost" type="button" id="printBtn">${icon("print", 18)} Imprimir</button>
         </div>
       </div>
 
       ${o.status === "sin_confirmar" ? `<div class="await">
-        <span class="await__ico">${icon("wa", 22)}</span>
+        <span class="await__ico">${waIcon(24)}</span>
         <div><b>Esperando el WhatsApp del cliente</b><span>Confirmá el pedido cuando te llegue un mensaje con el código <code>${esc(o.id)}</code>.${hours ? ` Si no se confirma, se cancela solo en <b>${leftTxt}</b>.` : ""}</span></div>
       </div>` : ""}
       <section class="card steps-card">

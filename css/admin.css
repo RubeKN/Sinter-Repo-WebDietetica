@@ -601,3 +601,8 @@ code { background: #fff; border: 1px solid var(--border); border-radius: 4px; pa
 .alert-unconf em { margin-left: auto; font-style: normal; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; color: var(--forest); }
 .alert-unconf:hover { background: #fffaf0; }
 @media (max-width: 860px) { .ostep b { font-size: .66rem; } }
+
+/* Botones de estado del pedido: mismo tamaño */
+.ostep__actions .btn { flex: 0 1 230px; height: 46px; padding: 0 16px; font-size: .92rem; white-space: nowrap; }
+.btn--wa svg { flex: none; }
+@media (max-width: 560px) { .ostep__actions .btn { flex: 1 1 100%; } }
